@@ -106,6 +106,8 @@ var mapView = {
   setBotPathOptions: function(checked) {
       var self = this;
       for (var i = 0; i < self.settings.users.length; i++) {
+        var trainerPath = self.user_data[self.settings.users[i]].trainerPath;
+        if (!trainerPath) { continue; } // failsafe, in case user data hasn't been fully loaded
         self.user_data[self.settings.users[i]].trainerPath.setOptions({
           strokeOpacity: checked ? 1.0 : 0.0
         });
@@ -687,6 +689,7 @@ var mapView = {
         self.user_data[username].trainerPath.setPath(self.pathcoords[username]);
       }
     }
+    self.setBotPathOptions(self.settings.botPath);
     if (self.settings.users.length === 1 && self.settings.userZoom === true) {
       self.map.setZoom(self.settings.zoom);
     }
