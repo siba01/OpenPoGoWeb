@@ -317,6 +317,9 @@ var mapView = {
         sortButtons += '<div class="chip"><a href="#" data-sort="id">ID</a></div>';
         sortButtons += '<div class="chip"><a href="#" data-sort="time">Time</a></div>';
         sortButtons += '<div class="chip"><a href="#" data-sort="candy">Candy</a></div>';
+        sortButtons += '<div class="chip"><a href="#" data-sort="attack">Attack</a></div>';
+        sortButtons += '<div class="chip"><a href="#" data-sort="defense">Defense</a></div>';
+        sortButtons += '<div class="chip"><a href="#" data-sort="stamina">Stamina</a></div>';
         sortButtons += '</div>';
 
         $('#sortButtons').html(sortButtons);
@@ -393,7 +396,7 @@ var mapView = {
               url: 'image/pokemon/' + Pokemon.getImageById(data.pokemon_id),
               scaledSize: new google.maps.Size(70, 70)
             },
-            zIndex: 4,
+            zIndex: 3,
             optimized: false,
             clickable: false
           });
@@ -486,7 +489,7 @@ var mapView = {
         pkmnIV = myPokemon.IV,
         pkmnIVA = myPokemon.attackIV,
         pkmnIVD = myPokemon.defenseIV,
-        pkmnIVS = myPokemon.speedIV,
+        pkmnIVS = myPokemon.staminaIV,
         pkmnCandy = myPokemon.candy,
         pkmnHP = myPokemon.health,
         pkmnMHP = myPokemon.maxHealth,
@@ -500,6 +503,7 @@ var mapView = {
           (jsPkmTime.isSameOrAfter(jsChkTime) ? '<span class="pkmn-info-img-glow"></span>' : '') +
         '</span>' +
         '<span class="pkmn-info-name">' +
+          (sortOn == 'id' ? pkmnNum + ' - ' : '') +
           pkmnName +
         '</span>' + 
         '<div class="pkmn-info-hp-bar pkmn-' + pkmnNum + ' progress"><div class="determinate pkmn-' + pkmnNum + '" style="width: ' + (pkmnHP / pkmnMHP) * 100 +'%"></div></div>'+
@@ -507,7 +511,7 @@ var mapView = {
           '<b>HP:</b> ' + pkmnHP + ' / ' + pkmnMHP +
         '</span>' +
         '<span class="pkmn-info-iv">' +
-          '<b>IV:</b> ' + (pkmnIV >= 0.8 ? '<span>' + pkmnIV + '</span>' : pkmnIV) +
+          '<b>IV:</b> <span class="' + (pkmnIV == 1 ? 'perfect' : (pkmnIV >= 0.8 ? 'solid' : '')) + '">' + pkmnIV + '</span>' +
         '</span>' +
         '<span>' +
           '<b>A/D/S:</b> ' + pkmnIVA + '/' + pkmnIVD + '/' + pkmnIVS +
@@ -656,7 +660,7 @@ var mapView = {
         },
         //icon: 'image/trainer/' + self.trainerSex[randomSex] + Math.floor(Math.random() * self.numTrainers[randomSex] + 1) + '.png',
         icon: 'image/trainer/pokeball.png', // forced trainer icon
-        zIndex: 3,
+        zIndex: 4,
         //label: username,
         clickable: true
       });

@@ -47,48 +47,64 @@ class Player {
     switch (sortKey) {
       case 'name':
         sortedPokemon.sort(function(a, b) {
-          if (a.name < b.name) return -1;
-          if (a.name > b.name) return 1;
-          if (a.combatPower > b.combatPower) return -1;
-          if (a.combatPower < b.combatPower) return 1;
-          return 0;
+          var t = a.name.localeCompare(b.name, "en-US");
+          if (!t) { t = b.combatPower - a.combatPower; } // 2nd step: compare CP
+          return t;
         });
         break;
       case 'id':
         sortedPokemon.sort(function(a, b) {
-          if (a.id < b.id) return -1;
-          if (a.id > b.id) return 1;
-          if (a.combatPower > b.combatPower) return -1;
-          if (a.combatPower < b.combatPower) return 1;
-          return 0;
+          var t = a.id - b.id;
+          if (!t) { t = b.combatPower - a.combatPower; } // 2nd step: compare CP
+          return t;
         });
         break;
       case 'cp':
         sortedPokemon.sort(function(a, b) {
-          if (a.combatPower > b.combatPower) return -1;
-          if (a.combatPower < b.combatPower) return 1;
-          return 0;
+          return b.combatPower - a.combatPower;
         });
         break;
       case 'iv':
         sortedPokemon.sort(function(a, b) {
-          if (a.IV > b.IV) return -1;
-          if (a.IV < b.IV) return 1;
-          return 0;
+          var t = b.IV - a.IV;
+          if (!t) { t = b.combatPower - a.combatPower; } // 2nd step: compare CP
+          return t;
         });
         break;
       case 'time':
         sortedPokemon.sort(function(a, b) {
-          if (a.creationTime > b.creationTime) return -1;
-          if (a.creationTime < b.creationTime) return 1;
-          return 0;
+          return b.creationTime - a.creationTime;
         });
         break;
       case 'candy':
         sortedPokemon.sort(function(a, b) {
-          if (a.candy > b.candy) return -1;
-          if (a.candy < b.candy) return 1;
-          return 0;
+          var t = b.candy - a.candy;
+          if (!t) { t = b.combatPower - a.combatPower; } // 2nd step: compare CP
+          return t;
+        });
+        break;
+      case 'attack':
+        sortedPokemon.sort(function(a, b) {
+          var t = b.attackIV - a.attackIV;
+          if (!t) { t = b.IV - a.IV; } // 2nd step: compare IV
+          if (!t) { t = b.combatPower - a.combatPower; } // 3rd step: compare CP
+          return t;
+        });
+        break;
+      case 'defense':
+        sortedPokemon.sort(function(a, b) {
+          var t = b.defenseIV - a.defenseIV;
+          if (!t) { t = b.IV - a.IV; } // 2nd step: compare IV
+          if (!t) { t = b.combatPower - a.combatPower; } // 3rd step: compare CP
+          return t;
+        });
+        break;
+      case 'stamina':
+        sortedPokemon.sort(function(a, b) {
+          var t = b.staminaIV - a.staminaIV;
+          if (!t) { t = b.IV - a.IV; } // 2nd step: compare IV
+          if (!t) { t = b.combatPower - a.combatPower; } // 3rd step: compare CP
+          return t;
         });
         break;
       default:

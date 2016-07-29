@@ -277,7 +277,7 @@ html, body {
     transition: background-color .2s;
     border-radius: 2px;
 }
-.row .col.l3:hover { background-color: #f7f7f7; }
+.row .col.l3:hover { background-color: #F7F7F7; }
 .chip {
 	height: initial;
 	font-size: initial;
@@ -343,7 +343,8 @@ html, body {
 	max-width: 96px;
 }
 
-.pkmn-info-iv > span { color: #039be5; }
+.pkmn-info-iv > .solid { color: #4CAF50; }
+.pkmn-info-iv > .perfect { color: #039BE5; font-weight: bold; }
 
 .pkmn-info-candy { cursor: default; }
 
