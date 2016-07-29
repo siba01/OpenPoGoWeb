@@ -397,7 +397,7 @@ var mapView = {
               scaledSize: new google.maps.Size(70, 70)
             },
             zIndex: 3,
-            optimized: false,
+            //optimized: false, // need to figure out what this does - one thing that I know, zIndex gets ignored when this param exists
             clickable: false
           });
           if (self.settings.userZoom === true) {
@@ -549,9 +549,9 @@ var mapView = {
       out += '<div class="col s12 m6 l3 center pkmn-info-container">' + 
         '<img src="image/pokemon/' + entry.image + '" class="png_img">' +
         '<span class="pkmn-info-name"> ' +
-          Pokemon.getPaddedId(entry.id) +
-          ' - ' +
+          (sortOn != 'name' ? Pokemon.getPaddedId(entry.id) + ' - ' : '') +
           entry.name +
+          (sortOn == 'name' ? ' - ' + Pokemon.getPaddedId(entry.id) : '') +
         '</span>' +
         '<span>' +
           '<b>Seen:</b> ' + entry.encountered +

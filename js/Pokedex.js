@@ -41,9 +41,7 @@ class Pokedex {
         break;
       case 'name':
         sortedPokedex.sort(function(a, b) {
-          if (a.name < b.name) return -1;
-          if (a.name > b.name) return 1;
-          return 0;
+          return a.name.localeCompare(b.name, "en-US");
         });
         break;
       case 'enc':
@@ -60,9 +58,9 @@ class Pokedex {
         break;
       case 'candy':
         sortedPokedex.sort(function(a, b) {
-          if (a.candy > b.candy) return -1;
-          if (a.candy < b.candy) return 1;
-          return 0;
+          var t = b.candy - a.candy;
+          if (!t) { t = a.id - b.id; } // 2nd step: compare ID
+          return t;
         });
         break;
       default:
