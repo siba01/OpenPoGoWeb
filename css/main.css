@@ -333,6 +333,7 @@ html, body {
 		display: block;
 		margin: 0 auto;
 		position: relative;
+		z-index: 1;
 	}
 
 .pkmn-info-hp-bar {
