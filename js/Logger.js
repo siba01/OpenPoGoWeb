@@ -10,7 +10,7 @@ class Logger {
     var color = logObject.color || 'black';
     var message = logObject.message || '';
     var shouldToast = logObject.toast || true;
-    this.panel.append("<div class='log-item'><span class='log-date'>" + time + "</span><p class='" + color + "-text'>" + message + "</p></div>");
+    this.panel.prepend("<div class='log-item'><span class='log-date'>" + time + "</span><p class='" + color + "-text'>" + message + "</p></div>");
     if (!this.panel.is(":visible") && shouldToast) {
       Materialize.toast(message, 3000);
     }

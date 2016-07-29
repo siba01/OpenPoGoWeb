@@ -254,31 +254,44 @@ html, body {
 	background-color: #EDBB99;
 }
 
-/** TWEAKS FOR MATERIALIZER.CSS **/
+
+/** EXTRA **/
 
 #menu { width: 200px; }
+
 #subcontent { margin-top: 20px; }
-.progress { margin: 0.5rem 0; }
-.progress-text {
-	display: block;
-    text-align: center;
-    position: relative;
-    line-height: 30px;
-    color: white;
-    font-weight: bold;
+
+.pokemon-sort { margin-top: -5px; }
+
+.bot-exp-bar {
+	height: 1.5em;
+	margin: 0.5rem 0;
+	text-align: center;
 }
+
+	.bot-exp-bar span {
+	    position: relative;
+	    color: white;
+	    font-weight: bold;
+	    text-shadow: 0px 0px 1px #000;
+	    top: 1px;
+	}
+
 .container .row {
 	margin-left: auto;
 	margin-right: auto;
 }
+
 .row .col.l3 {
 	padding-top: 0.75rem;
     padding-bottom: 0.75rem;
     transition: background-color .2s;
     border-radius: 2px;
 }
-.row .col.l3:hover { background-color: #F7F7F7; }
-.chip {
+
+	.row .col.l3:hover { background-color: #F7F7F7; }
+
+#sortButtons .chip {
 	height: initial;
 	font-size: initial;
 	font-weight: initial;
@@ -288,20 +301,19 @@ html, body {
 	background: initial;
 	margin: initial;
 }
-.chip a {
-	display: inline-block;
-    height: 32px;
-    font-size: 13px;
-    font-weight: 500;
-    line-height: 32px;
-    padding: 0 12px;
-    border-radius: 16px;
-    background-color: #e4e4e4;
-    margin-right: 3px;
-}
 
-
-/** EXTRA **/
+	#sortButtons .chip a {
+		display: inline-block;
+	    height: 32px;
+	    font-size: 13px;
+	    font-weight: 500;
+	    line-height: 32px;
+	    padding: 0 12px;
+	    border-radius: 16px;
+	    background-color: #e4e4e4;
+	    margin-right: 5px;
+	    margin-top: 5px;
+	}
 
 .pkmn-info-container > span { display: block; }
 
@@ -337,18 +349,27 @@ html, body {
 	}
 
 .pkmn-info-hp-bar {
-	width: 80%;
-	height: 5px;
-	margin: 0.3rem auto;
+	height: 1.5em;
+	margin: 0.2rem auto;
 	max-width: 96px;
 }
 
+	.pkmn-info-hp-bar > span {
+		position: relative;
+	    color: white;
+	    text-shadow: 0px 0px 1px #000;
+	    top: 1px;
+	}
+
 .pkmn-info-iv > .solid { color: #4CAF50; }
+
 .pkmn-info-iv > .perfect { color: #039BE5; font-weight: bold; }
+
+.pkmn-info-sort-ads { color: #4CAF50; }
 
 .pkmn-info-candy { cursor: default; }
 
-	.pkmn-info-candy > img {
+	.pkmn-info-candy > span > img {
 		height: 17px;
 	    width: 17px;
 	    position: relative;

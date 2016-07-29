@@ -1,6 +1,6 @@
 'use strict';
 
-var logger = new Logger("#logs-panel .card-content");
+var logger = new Logger("#logs-panel .card-content #logs");
 
 $(document).ready(function() {
   mapView.init();
@@ -199,6 +199,7 @@ var mapView = {
         { "featureType": "poi", "elementType": "geometry.fill", "stylers": [ { "color": "#d3ffcc" } ] },{ "elementType": "labels", "stylers": [ { "visibility": "off" } ] } 
       ]
     });
+
     self.placeTrainer();
     self.addCatchable();
     setInterval(self.placeTrainer, 1000);
@@ -249,7 +250,7 @@ var mapView = {
           self.settings.users[user_id] +
           '</h5><br>Level: ' +
           current_user_stats.level +
-          '<br><div class="progress botbar-' + user_id + '" style="height: 30px"><div class="determinate bot-' + user_id + '" style="width: '+
+          '<br><div class="progress botbar-' + user_id + ' bot-exp-bar"><div class="determinate bot-' + user_id + '" style="width: '+
           parseFloat(exp_to_level_percentage).toFixed(2) +
           '%"></div><span class="progress-text">' +
           parseFloat(exp_to_level_percentage).toFixed(2) +
@@ -299,7 +300,7 @@ var mapView = {
             current_user_bag_items[i].inventory_item_data.item.item_id +
             '.png" class="item_img"><br><b>' +
             Item.getName(current_user_bag_items[i].inventory_item_data.item.item_id) +
-            '</b><br>Count: ' +
+            '</b><br><b>Count:</b> ' +
             (current_user_bag_items[i].inventory_item_data.item.count || 0) +
             '</div>';
         }
@@ -356,7 +357,7 @@ var mapView = {
     var self = this,
       users = self.settings.users;
     var out = '<div class="col s12"><ul id="bots-list" class="collapsible" data-collapsible="accordion"> \
-              <li><div class="collapsible-title"><i class="material-icons">people</i>Bots</div></li>';
+              <li><div class="collapsible-header"><i class="material-icons">people</i>Bots</div></li>';
 
     for (var i = 0; i < users.length; i++) {
       var content = '<li class="bot-user">\
@@ -390,7 +391,7 @@ var mapView = {
           poke_name = Pokemon.getPokemonById(data.pokemon_id).Name;
           logger.log({
             message: "[" + username + "] " + poke_name + " appeared",
-            color: "green-text"
+            color: "green"
           });
           user.catchables[data.spawnpoint_id] = new google.maps.Marker({
             map: self.map,
@@ -480,7 +481,7 @@ var mapView = {
       user = self.user_data[self.settings.users[user_id]],
       user_id = user_id || 0;
 
-    if (!user.bagPokemon.length) return;
+    //if (!user.bagPokemon.length) return; // commented out because this will prevent Pokemon inventory from showing (including eggs) if there's no Pokemon
 
     var sortedPokemon = user.getSortedPokemon(sortOn);
 
@@ -513,23 +514,39 @@ var mapView = {
           (sortOn == 'id' ? pkmnNum + ' - ' : '') +
           pkmnName +
         '</span>' + 
-        '<div class="pkmn-info-hp-bar pkmn-' + pkmnNum + ' progress"><div class="determinate pkmn-' + pkmnNum + '" style="width: ' + (pkmnHP / pkmnMHP) * 100 +'%"></div></div>'+
-        '<span>' +
-          '<b>HP:</b> ' + pkmnHP + ' / ' + pkmnMHP +
-        '</span>' +
+        '<div class="pkmn-info-hp-bar pkmn-' + pkmnNum + ' progress">' +
+          '<div class="determinate pkmn-' + pkmnNum + '" style="width: ' + (pkmnHP / pkmnMHP) * 100 +'%"></div>' +
+          '<span>' + pkmnHP + ' / ' + pkmnMHP + '</span>' +
+        '</div>'+
+        /*'<span>' +
+          '<b>HP:</b> ' + pkmnHP + ' / ' + pkmnMHP + // obsolote because of the new display on the health bar
+        '</span>' +*/
         '<span class="pkmn-info-iv">' +
-          '<b>IV:</b> <span class="' + (pkmnIV == 1 ? 'perfect' : (pkmnIV >= 0.8 ? 'solid' : '')) + '">' + pkmnIV + '</span>' +
+          '<b>IV:</b> ' +
+          // attach IV coloring effect only when the sorting mode isn't attack, defense and stamina, so that coloring can be focused on the selected sorting mode instead
+          '<span class="' + (sortOn != 'attack' && sortOn != 'defense' && sortOn != 'stamina' ? (pkmnIV == 1 ? 'perfect' : (pkmnIV >= 0.8 ? 'solid' : '')) : '') + '">' +
+            pkmnIV +
+          '</span>' +
         '</span>' +
         '<span>' +
-          '<b>A/D/S:</b> ' + pkmnIVA + '/' + pkmnIVD + '/' + pkmnIVS +
+          '<b>A/D/S:</b> ' +
+          (sortOn == 'attack' ? '<span class="pkmn-info-sort-ads">' + pkmnIVA + '</span>' : pkmnIVA) +
+          '/' +
+          (sortOn == 'defense' ? '<span class="pkmn-info-sort-ads">' + pkmnIVD + '</span>' : pkmnIVD) +
+          '/' +
+          (sortOn == 'stamina' ? '<span class="pkmn-info-sort-ads">' + pkmnIVS + '</span>' : pkmnIVS) +
         '</span>' +
-        '<span class="pkmn-info-candy" title="' + pkmnCandy + ' Candies">' +
-          '<b>' + pkmnCandy + '</b>' +
-          '<img src="image/items/Candy_new.png">' +
+        '<span class="pkmn-info-candy">' +
+          '<span class="tooltipped" data-position="right" data-delay="25" data-tooltip="' + pkmnCandy + ' Candies">' +
+            '<b>' + pkmnCandy + '</b>' +
+            '<img src="image/items/Candy_new.png">' +
+          '</span>' +
         '</span>' +
+        (sortOn == 'time' ?
         '<span class="pkmn-info-capture-time" title="' + jsPkmTime.format("dddd, MMMM Do YYYY, h:mm:ss a") + '">' +
           jsPkmTime.fromNow() +
-        '</span>' +
+        '</span>'
+        : '') +
       '</div>';
     }
 
@@ -542,6 +559,7 @@ var mapView = {
       return (nth % 4 === 0) ? '</div></div><div class="row"><div' : match;
     });
     $('#subcontent').html(out);
+    $('#subcontent .tooltipped').tooltip();
   },
   sortAndShowPokedex: function(sortOn, user_id) {
     var self = this,
@@ -566,9 +584,11 @@ var mapView = {
         '<span>' +
           '<b>Caught:</b> ' + entry.captured +
         '</span>' +
-        '<span class="pkmn-info-candy" title="' + entry.candy + ' Candies">' +
-          '<b>' + entry.candy + '</b>' +
-          '<img src="image/items/Candy_new.png">' +
+        '<span class="pkmn-info-candy">' +
+          '<span class="tooltipped" data-position="right" data-delay="25" data-tooltip="' + entry.candy + ' Candies">' +
+            '<b>' + entry.candy + '</b>' +
+            '<img src="image/items/Candy_new.png">' +
+          '</span>' +
         '</span>' +
       '</div>';
     }
@@ -579,6 +599,7 @@ var mapView = {
       return (nth % 4 === 0) ? '</div></div><div class="row"><div' : match;
     });
     $('#subcontent').html(out);
+    $('#subcontent .tooltipped').tooltip();
   },
   trainerFunc: function(data, username) {
     var self = mapView,
@@ -607,7 +628,10 @@ var mapView = {
                   lng: parseFloat(fort.longitude)
                 },
                 zIndex: 2,
-                icon: 'image/forts/' + self.teams[(fort.owned_by_team || 0)] + '.png'
+                icon: {
+                  url: 'image/forts/' + self.teams[(fort.owned_by_team || 0)] + '.png',
+                  scaledSize: new google.maps.Size(30, 30)
+                }
               });
             }
             var fortPoints = '',
@@ -656,7 +680,7 @@ var mapView = {
       self.addInventory();
       logger.log({
         message: "Trainer loaded: " + username,
-        color: "blue-text"
+        color: "blue"
       });
       //var randomSex = Math.floor(Math.random() * 1);
       self.user_data[username].marker = new google.maps.Marker({
@@ -666,7 +690,10 @@ var mapView = {
           lng: parseFloat(data.lng)
         },
         //icon: 'image/trainer/' + self.trainerSex[randomSex] + Math.floor(Math.random() * self.numTrainers[randomSex] + 1) + '.png',
-        icon: 'image/trainer/pokeball.png', // forced trainer icon
+        icon: {
+          url: 'image/trainer/pokeball.png', // forced trainer icon
+          //scaledSize: new google.maps.Size(40, 40)
+        },
         zIndex: 4,
         //label: username,
         clickable: true
