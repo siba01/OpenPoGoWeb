@@ -103,6 +103,14 @@ var mapView = {
       self.initMap();
     });
   },
+  setBotPathOptions: function(checked) {
+      var self = this;
+      for (var i = 0; i < self.settings.users.length; i++) {
+        self.user_data[self.settings.users[i]].trainerPath.setOptions({
+          strokeOpacity: checked ? 1.0 : 0.0
+        });
+      }
+  },
   bindUi: function() {
     var self = this;
     $('#switchPan').prop('checked', self.settings.userFollow);
