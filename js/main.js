@@ -545,7 +545,7 @@ var mapView = {
         '</span>' +
         '<span class="pkmn-info-candy" title="' + pkmnCandy + ' Candies">' +
           '<b>' + pkmnCandy + '</b>' +
-          '<img src="image/items/candy.png">' +
+          '<img src="image/items/Candy_new.png">' +
         '</span>' +
         '<span class="pkmn-info-capture-time" title="' + jsPkmTime.format("dddd, MMMM Do YYYY, h:mm:ss a") + '">' +
           jsPkmTime.fromNow() +
@@ -588,7 +588,7 @@ var mapView = {
         '</span>' +
         '<span class="pkmn-info-candy" title="' + entry.candy + ' Candies">' +
           '<b>' + entry.candy + '</b>' +
-          '<img src="image/items/candy.png">' +
+          '<img src="image/items/Candy_new.png">' +
         '</span>' +
       '</div>';
     }
