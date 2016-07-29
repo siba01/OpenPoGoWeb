@@ -10,7 +10,7 @@ class Player {
     this.trainerPath = undefined;
   }
  
-  updateInventory(data) {
+  updateInventory(data, username) {
     function filterInventory(arr, search) {
       var filtered = [];
       for (var i = 0; i < arr.length; i++) {
@@ -21,14 +21,14 @@ class Player {
       return filtered;
     }
 
-    this.bagCandy = filterInventory(data, 'pokemon_family');
+    this.bagCandy = filterInventory(data, 'candy');
     this.bagItems = filterInventory(data, 'item');
-    this.pokedex = new Pokedex(filterInventory(data, 'pokedex_entry'));
+    this.pokedex = new Pokedex(filterInventory(data, 'pokedex_entry'), username);
     this.stats = filterInventory(data, 'player_stats')[0].inventory_item_data.player_stats;
-    this.updatePokemon(filterInventory(data, 'pokemon_data'));
+    this.updatePokemon(filterInventory(data, 'pokemon_data'), username);
   } 
 
-  updatePokemon(data) {
+  updatePokemon(data, username) {
     this.eggs = 0;
     this.bagPokemon = [];
     for (var i = 0; i < data.length; i++) {
@@ -38,7 +38,7 @@ class Player {
         this.eggs++;
         continue;
       }
-      this.bagPokemon.push(new Pokemon(pokeData));
+      this.bagPokemon.push(new Pokemon(pokeData, username));
     }    
   }
 
@@ -72,8 +72,8 @@ class Player {
         break;
       case 'iv':
         sortedPokemon.sort(function(a, b) {
-          if (a.iv > b.iv) return -1;
-          if (a.iv < b.iv) return 1;
+          if (a.IV > b.IV) return -1;
+          if (a.IV < b.IV) return 1;
           return 0;
         });
         break;
@@ -81,6 +81,13 @@ class Player {
         sortedPokemon.sort(function(a, b) {
           if (a.creationTime > b.creationTime) return -1;
           if (a.creationTime < b.creationTime) return 1;
+          return 0;
+        });
+        break;
+      case 'candy':
+        sortedPokemon.sort(function(a, b) {
+          if (a.candy > b.candy) return -1;
+          if (a.candy < b.candy) return 1;
           return 0;
         });
         break;

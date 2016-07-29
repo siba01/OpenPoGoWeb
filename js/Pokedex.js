@@ -1,14 +1,15 @@
 class Pokedex {
-  constructor(data) {
+  constructor(data, username) {
     this.entries = {};
     for (var i = 0; i < data.length; i++) {
       var entry = {};
       var entryData = data[i].inventory_item_data.pokedex_entry;
-      entry['id'] = entryData.pokedex_entry_number;
+      entry['id'] = entryData.pokemon_id;
       entry['name'] = Pokemon.getNameById(entry['id']);
       entry['image'] = Pokemon.getImageById(entry['id']);
       entry['encountered'] = entryData.times_encountered || 0;
       entry['captured'] = entryData.times_captured || 0;
+      entry['candy'] = mapView.getCandy(entry['id'], username);
       this.entries[entry['id']] = entry;
     }
   }
@@ -47,12 +48,21 @@ class Pokedex {
         break;
       case 'enc':
         sortedPokedex.sort(function(a, b) {
-          return a.encountered - b.encountered;
+          return b.encountered - a.encountered; // descending
+          //return a.encountered - b.encountered; // ascending
         });
         break;
       case 'cap':
         sortedPokedex.sort(function(a, b) {
-          return a.captured - b.captured;
+          return b.captured - a.captured; // descending
+          // return a.captured - b.captured; // ascending
+        });
+        break;
+      case 'candy':
+        sortedPokedex.sort(function(a, b) {
+          if (a.candy > b.candy) return -1;
+          if (a.candy < b.candy) return 1;
+          return 0;
         });
         break;
       default:

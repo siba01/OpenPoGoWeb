@@ -253,3 +253,109 @@ html, body {
 .botbar-13 {
 	background-color: #EDBB99;
 }
+
+/** TWEAKS FOR MATERIALIZER.CSS **/
+
+#menu { width: 200px; }
+#subcontent { margin-top: 20px; }
+.progress { margin: 0.5rem 0; }
+.progress-text {
+	display: block;
+    text-align: center;
+    position: relative;
+    line-height: 30px;
+    color: white;
+    font-weight: bold;
+}
+.container .row {
+	margin-left: auto;
+	margin-right: auto;
+}
+.row .col.l3 {
+	padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+    transition: background-color .2s;
+    border-radius: 2px;
+}
+.row .col.l3:hover { background-color: #f7f7f7; }
+.chip {
+	height: initial;
+	font-size: initial;
+	font-weight: initial;
+	line-height: initial;
+	padding: initial;
+	border-radius: initial;
+	background: initial;
+	margin: initial;
+}
+.chip a {
+	display: inline-block;
+    height: 32px;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 32px;
+    padding: 0 12px;
+    border-radius: 16px;
+    background-color: #e4e4e4;
+    margin-right: 3px;
+}
+
+
+/** EXTRA **/
+
+.pkmn-info-container > span { display: block; }
+
+.pkmn-info-cp > span {
+	font-size: 1.5em;
+    display: inline-block;
+    margin-left: 3px;
+}
+
+.pkmn-info-name { font-weight: bold; }
+
+.pkmn-info-img-container { position: relative; }
+
+	.pkmn-info-img-container > .pkmn-info-img-glow {
+		position: absolute;
+	    top: 50%;
+	    left: 50%;
+	    width: 40px;
+	    height: 40px;
+	    display: block;
+	    margin-left: -20px;
+	    margin-top: -20px;
+	    background-color: rgba(3,155,229,0.1);
+	    border-radius: 100%;
+	    box-shadow: 0px 0px 30px 30px rgba(3,155,229,0.1);
+	}
+
+	.pkmn-info-img-container > .pkmn-info-img {
+		display: block;
+		margin: 0 auto;
+		position: relative;
+	}
+
+.pkmn-info-hp-bar {
+	width: 80%;
+	height: 5px;
+	margin: 0.3rem auto;
+	max-width: 96px;
+}
+
+.pkmn-info-iv > span { color: #039be5; }
+
+.pkmn-info-candy { cursor: default; }
+
+	.pkmn-info-candy > img {
+		height: 17px;
+	    width: 17px;
+	    position: relative;
+	    display: inline-block;
+	    top: 2px;
+	    margin-left: 5px;
+	}
+
+.pkmn-info-capture-time {
+	font-weight: bold;
+	cursor: default;
+}

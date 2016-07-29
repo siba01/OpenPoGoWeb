@@ -12,6 +12,10 @@
     <!-- Compiled and minified JavaScript -->
     <script src="//cdnjs.cloudflare.com/ajax/libs/materialize/0.97.6/js/materialize.min.js" type="text/javascript" ></script>
     <link rel="stylesheet" href="css/main.css" type="text/css">
+    <link rel="icon" type="image/png" href="favicon_128x128.png">
+    <link rel="icon" type="image/png" href="favicon_64x64.png">
+    <link rel="icon" type="image/png" href="favicon_32x32.png">
+    <link rel="icon" type="image/png" href="favicon_16x16.png">
   </head>
   <body>
     <div class="container" id="menu">
@@ -89,16 +93,19 @@
       <div class="card white">
         <div class="card-content black-text">
           <b>Logs</b>
+          <div id="logs"></div>
         </div>
       </div>
     </div>
 
     <div id="map"></div>
-    // Promise library
+    <!-- Promise library -->
     <script src="//cdn.jsdelivr.net/bluebird/3.4.1/bluebird.min.js"></script>
-    // Websockets
-    <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
-    // Our stuff
+    <!-- Websockets -->
+    <!--<script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>-->
+    <!-- MomentJS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.14.1/moment.min.js"></script>
+    <!-- Our stuff -->
     <script type="text/javascript" src="config/userdata.js"></script>
     <script type="text/javascript" src="js/Logger.js"></script>
     <script type="text/javascript" src="js/Item.js"></script>

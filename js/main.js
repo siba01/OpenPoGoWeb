@@ -4,7 +4,7 @@ var logger = new Logger("#logs-panel .card-content");
 
 $(document).ready(function() {
   mapView.init();
-  
+  /*
   var socket = io.connect('http://' + document.domain + ':' + location.port + '/event');
 
   socket.on('connect', function() {
@@ -18,7 +18,7 @@ $(document).ready(function() {
         toast: msg[i].toast || false
       });
     }
-  });
+  });*/
 });
 
 function loadJSON(path) {
@@ -36,6 +36,14 @@ function loadJSON(path) {
     });
   });
 }
+
+// Array of required EXPs to level up for each level
+var exps_per_level = {
+    0: 0, 1: 1000, 2: 2000, 3: 3000, 4: 4000, 5: 5000, 6: 6000, 7: 7000, 8: 8000, 9: 9000, 10: 10000,
+    11: 10000, 12: 10000, 13: 10000, 14: 15000, 15: 20000, 16: 20000, 17: 20000, 18: 25000, 19: 25000, 20: 50000,
+    21: 75000, 22: 100000, 23: 125000, 24: 150000, 25: 190000, 26: 200000, 27: 250000, 28: 300000, 29: 350000, 30: 500000,
+    31: 500000, 32: 750000, 33: 1000000, 34: 1250000, 35: 1500000, 36: 2000000, 37: 2500000, 38: 3000000, 39: 5000000, 40: 5000000
+  };
 
 var mapView = {
   user_index: 0,
@@ -99,7 +107,7 @@ var mapView = {
     var self = this;
     $('#switchPan').prop('checked', self.settings.userFollow);
     $('#switchZoom').prop('checked', self.settings.userZoom);
-    $('#strokeOn').prop('checked', false);
+    $('#strokeOn').prop('checked', self.settings.botPath);
 
     $('#switchPan').change(function() {
       self.settings.userFollow = this.checked;
@@ -110,11 +118,8 @@ var mapView = {
     });
 
     $('#strokeOn').change(function() {
-      for (var i = 0; i < self.settings.users.length; i++) {
-        self.user_data[self.settings.users[i]].trainerPath.setOptions({
-          strokeOpacity: this.checked ? 1.0 : 0.0
-        });
-      }
+      self.settings.botPath = this.checked;
+      self.setBotPathOptions(this.checked);
     });
 
     $('#optionsButton').click(function() {
@@ -167,12 +172,18 @@ var mapView = {
   },
   initMap: function() {
     var self = this;
+    // https://github.com/OpenPoGo/OpenPoGoWeb/issues/122
     self.map = new google.maps.Map(document.getElementById('map'), {
-      center: {
-        lat: 50.0830986,
-        lng: 6.7613762
-      },
-      zoom: 8
+      center: {lat: 50.0830986, lng: 6.7613762},
+      zoom: 8,
+      mapTypeId: 'roadmap',
+      styles: [ 
+        { "featureType": "road", "elementType": "geometry.fill", "stylers": [ { "color": "#4f9f92" }, { "visibility": "on" } ] },
+        { "featureType": "water", "elementType": "geometry.stroke", "stylers": [ { "color": "#feff95" }, { "visibility": "on" }, { "weight": 1.2 } ] },
+        { "featureType": "landscape", "elementType": "geometry", "stylers": [ { "color": "#adff9d" }, { "visibility": "on" } ] },
+        { "featureType": "water", "stylers": [ { "visibility": "on" }, { "color": "#147dd9" } ] },
+        { "featureType": "poi", "elementType": "geometry.fill", "stylers": [ { "color": "#d3ffcc" } ] },{ "elementType": "labels", "stylers": [ { "visibility": "off" } ] } 
+      ]
     });
     self.placeTrainer();
     self.addCatchable();
@@ -194,9 +205,16 @@ var mapView = {
     for (var i = 0; i < self.settings.users.length; i++) {
       var username = self.settings.users[i];
       loadJSON('inventory-' + username + '.json').then(function(data) {
-        self.user_data[username].updateInventory(data);
+        self.user_data[username].updateInventory(data, username); // Pass username to be used to get candy num for Pokemon and Pokedex constructors.. I may need better method than this
       });
     }
+  },
+  calculateTotalPreviousExps: function(level)
+  {
+    var t, i;
+    t = 0;
+    for (i = 0; i < level; i++) { t += exps_per_level[i]; }
+    return t;
   },
   buildMenu: function(user_id, menu) {
     var self = this,
@@ -208,7 +226,7 @@ var mapView = {
         $('#subtitle').html('Trainer Info');
         $('#sortButtons').html('');
 
-        out += '<div class="row"><div class="col s12"><h5>' +
+        /*out += '<div class="row"><div class="col s12"><h5>' +
           self.settings.users[user_id] +
           '</h5><br>Level: ' +
           current_user_stats.level +
@@ -239,18 +257,61 @@ var mapView = {
           (current_user_stats.poke_stop_visits || 0) +
           '<br>Kilometers Walked: ' +
           (parseFloat(current_user_stats.km_walked).toFixed(2) || 0) +
+          '</div></div>';*/
+
+        var exp_for_current_level = current_user_stats.experience - self.calculateTotalPreviousExps(current_user_stats.level),
+          exp_to_level_percentage = exp_for_current_level / exps_per_level[current_user_stats.level] * 100;
+
+        out += '<div class="row"><div class="col s12"><h5>' +
+          self.settings.users[user_id] +
+          '</h5><br>Level: ' +
+          current_user_stats.level +
+          '<br><div class="progress botbar-' + user_id + '" style="height: 30px"><div class="determinate bot-' + user_id + '" style="width: '+
+          Number(Math.round(exp_to_level_percentage+'e2')+'e-2') +
+          '%"></div><span class="progress-text">' +
+          Number(Math.round(exp_to_level_percentage+'e2')+'e-2') +
+          '%</span></div>Accumulated Experience: ' +
+          current_user_stats.experience +
+          '<br>Experience to Level ' +
+          (parseInt(current_user_stats.level, 10) + 1) +
+          ': ' +
+          exp_for_current_level +
+          ' / ' +
+          exps_per_level[current_user_stats.level] +
+          '<br>Remaining Experience: ' +
+          (exps_per_level[current_user_stats.level] - exp_for_current_level) +
+          '<br>Pokemon Encountered: ' +
+          (current_user_stats.pokemons_encountered || 0) +
+          '<br>Pokeballs Thrown: ' +
+          (current_user_stats.pokeballs_thrown || 0) +
+          '<br>Pokemon Caught: ' +
+          (current_user_stats.pokemons_captured || 0) +
+          '<br>Small Ratata Caught: ' +
+          (current_user_stats.small_rattata_caught || 0) +
+          '<br>Pokemon Evolved: ' +
+          (current_user_stats.evolutions || 0) +
+          '<br>Eggs Hatched: ' +
+          (current_user_stats.eggs_hatched || 0) +
+          '<br>Unique Pokedex Entries: ' +
+          (current_user_stats.unique_pokedex_entries || 0) +
+          '<br>PokeStops Visited: ' +
+          (current_user_stats.poke_stop_visits || 0) +
+          '<br>Kilometers Walked: ' +
+          (parseFloat(current_user_stats.km_walked).toFixed(2) || 0) +
           '</div></div>';
 
         $('#subcontent').html(out);
         break;
       case 2:
-        var current_user_bag_items = self.user_data[self.settings.users[user_id]].bagItems;
-        $('#subtitle').html(current_user_bag_items.length + " item" + (current_user_bag_items.length !== 1 ? "s" : "") + " in Bag");
+        var current_user_bag_items = self.user_data[self.settings.users[user_id]].bagItems,
+          current_user_bag_items_total = 0;
 
         $('#sortButtons').html('');
 
         out = '<div class="items"><div class="row">';
         for (var i = 0; i < current_user_bag_items.length; i++) {
+          if (!current_user_bag_items[i].inventory_item_data.item.count) { continue; }
+          current_user_bag_items_total += current_user_bag_items[i].inventory_item_data.item.count;
           out += '<div class="col s12 m6 l3 center" style="float: left"><img src="image/items/' +
             current_user_bag_items[i].inventory_item_data.item.item_id +
             '.png" class="item_img"><br><b>' +
@@ -266,6 +327,7 @@ var mapView = {
           return (nth % 4 === 0) ? '</div></div><div class="row"><div' : match;
         });
         $('#subcontent').html(out);
+        $('#subtitle').html(current_user_bag_items_total + " item" + (current_user_bag_items_total !== 1 ? "s" : "") + " in Bag");
         break;
       case 3:
         var pkmnTotal = self.user_data[self.settings.users[user_id]].bagPokemon.length;
@@ -277,6 +339,7 @@ var mapView = {
         sortButtons += '<div class="chip"><a href="#" data-sort="name">Name</a></div>';
         sortButtons += '<div class="chip"><a href="#" data-sort="id">ID</a></div>';
         sortButtons += '<div class="chip"><a href="#" data-sort="time">Time</a></div>';
+        sortButtons += '<div class="chip"><a href="#" data-sort="candy">Candy</a></div>';
         sortButtons += '</div>';
 
         $('#sortButtons').html(sortButtons);
@@ -292,6 +355,7 @@ var mapView = {
         sortButtons += '<div class="chip"><a href="#" data-sort="name">Name</a></div>';
         sortButtons += '<div class="chip"><a href="#" data-sort="enc">Seen</a></div>';
         sortButtons += '<div class="chip"><a href="#" data-sort="cap">Caught</a></div>';
+        sortButtons += '<div class="chip"><a href="#" data-sort="candy">Candy</a></div>';
         sortButtons += '</div>';
 
         $('#sortButtons').html(sortButtons);
@@ -403,13 +467,13 @@ var mapView = {
     });
   },
   getCandy: function(p_num, user_id) {
-    var self = this,
-      user = self.user_data[self.settings.users[user_id]];
+    var self = mapView,
+      user = self.user_data[user_id];
 
     for (var i = 0; i < user.bagCandy.length; i++) {
-      var checkCandy = user.bagCandy[i].inventory_item_data.pokemon_family.family_id;
+      var checkCandy = user.bagCandy[i].inventory_item_data.candy.family_id;
       if (Pokemon.getCandyId(p_num) === checkCandy) {
-        return (user.bagCandy[i].inventory_item_data.pokemon_family.candy || 0);
+        return (user.bagCandy[i].inventory_item_data.candy.candy || 0);
       }
     }
   },
@@ -435,6 +499,7 @@ var mapView = {
 
     out = '<div class="items"><div class="row">';
 
+    var jsChkTime = moment().subtract(1, 'days');
     for (var i = 0; i < sortedPokemon.length; i++) {
       var myPokemon = sortedPokemon[i];
       var pkmnNum = myPokemon.id,
@@ -445,22 +510,41 @@ var mapView = {
         pkmnIVA = myPokemon.attackIV,
         pkmnIVD = myPokemon.defenseIV,
         pkmnIVS = myPokemon.speedIV,
-        candyNum = self.getCandy(pkmnNum, user_id);
+        pkmnCandy = myPokemon.candy,
+        pkmnHP = myPokemon.health,
+        pkmnMHP = myPokemon.maxHealth,
+        pkmTime = myPokemon.creationTime,
+        jsPkmTime = moment(pkmTime);
 
-      out += '<div class="col s12 m6 l3 center"><img src="image/pokemon/' +
-        pkmnImage +
-        '" class="png_img"><br><b>' +
-        pkmnName +
-        '</b><br>' +
-        pkmnCP +
-        '<br>IV: ' +
-        pkmnIV +
-        '<br>A/D/S: ' +
-        pkmnIVA + '/' + pkmnIVD + '/' + pkmnIVS +
-        '<br>Candy: ' +
-        candyNum +
-        '</div>';
+      out += '<div class="col s12 m6 l3 center pkmn-info-container">' + 
+        '<span class="pkmn-info-cp">CP<span>' + pkmnCP + '</span></span>' +
+        '<span class="pkmn-info-img-container">' +
+          '<img class="png_img pkmn-info-img" src="image/pokemon/' + pkmnImage + '">' +
+          (jsPkmTime.isSameOrAfter(jsChkTime) ? '<span class="pkmn-info-img-glow"></span>' : '') +
+        '</span>' +
+        '<span class="pkmn-info-name">' +
+          pkmnName +
+        '</span>' + 
+        '<div class="pkmn-info-hp-bar pkmn-' + pkmnNum + ' progress"><div class="determinate pkmn-' + pkmnNum + '" style="width: ' + (pkmnHP / pkmnMHP) * 100 +'%"></div></div>'+
+        '<span>' +
+          '<b>HP:</b> ' + pkmnHP + ' / ' + pkmnMHP +
+        '</span>' +
+        '<span class="pkmn-info-iv">' +
+          '<b>IV:</b> ' + (pkmnIV >= 0.8 ? '<span>' + pkmnIV + '</span>' : pkmnIV) +
+        '</span>' +
+        '<span>' +
+          '<b>A/D/S:</b> ' + pkmnIVA + '/' + pkmnIVD + '/' + pkmnIVS +
+        '</span>' +
+        '<span class="pkmn-info-candy" title="' + pkmnCandy + ' Candies">' +
+          '<b>' + pkmnCandy + '</b>' +
+          '<img src="image/items/candy.png">' +
+        '</span>' +
+        '<span class="pkmn-info-capture-time" title="' + jsPkmTime.format("dddd, MMMM Do YYYY, h:mm:ss a") + '">' +
+          jsPkmTime.fromNow() +
+        '</span>' +
+      '</div>';
     }
+
     // Add number of eggs
     out += '<div class="col s12 m4 l3 center" style="float: left;"><img src="image/pokemon/Egg.png" class="png_img"><br><b>You have ' + eggs + ' egg' + (eggs !== 1 ? "s" : "") + '</div>';
     out += '</div></div>';
@@ -481,20 +565,24 @@ var mapView = {
     var sortedPokedex = user.pokedex.getAllEntriesSorted(sortOn);
     for (var i = 0; i < sortedPokedex.length; i++) {
       var entry = sortedPokedex[i];
-      var candyNum = self.getCandy(entry.id, user_id);
-      out += '<div class="col s12 m6 l3 center"><img src="image/pokemon/' +
-        entry.image +
-        '" class="png_img"><br><b> ' +
-        Pokemon.getPaddedId(entry.id) +
-        ' - ' +
-        entry.name +
-        '</b><br>Times Seen: ' +
-        entry.encountered +
-        '<br>Times Caught: ' +
-        entry.captured +
-        '<br>Candy: ' +
-        candyNum +
-        '</div>';
+      out += '<div class="col s12 m6 l3 center pkmn-info-container">' + 
+        '<img src="image/pokemon/' + entry.image + '" class="png_img">' +
+        '<span class="pkmn-info-name"> ' +
+          Pokemon.getPaddedId(entry.id) +
+          ' - ' +
+          entry.name +
+        '</span>' +
+        '<span>' +
+          '<b>Seen:</b> ' + entry.encountered +
+        '</span>' +
+        '<span>' +
+          '<b>Caught:</b> ' + entry.captured +
+        '</span>' +
+        '<span class="pkmn-info-candy" title="' + entry.candy + ' Candies">' +
+          '<b>' + entry.candy + '</b>' +
+          '<img src="image/items/candy.png">' +
+        '</span>' +
+      '</div>';
     }
     out += '</div></div>';
     var nth = 0;
@@ -580,14 +668,15 @@ var mapView = {
         message: "Trainer loaded: " + username,
         color: "blue-text"
       });
-      var randomSex = Math.floor(Math.random() * 1);
+      //var randomSex = Math.floor(Math.random() * 1);
       self.user_data[username].marker = new google.maps.Marker({
         map: self.map,
         position: {
           lat: parseFloat(data.lat),
           lng: parseFloat(data.lng)
         },
-        icon: 'image/trainer/' + self.trainerSex[randomSex] + Math.floor(Math.random() * self.numTrainers[randomSex] + 1) + '.png',
+        //icon: 'image/trainer/' + self.trainerSex[randomSex] + Math.floor(Math.random() * self.numTrainers[randomSex] + 1) + '.png',
+        icon: 'image/trainer/m46.png', // forced trainer icon
         zIndex: 2,
         label: username,
         clickable: false
