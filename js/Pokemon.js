@@ -8,8 +8,8 @@ class Pokemon {
     this.speedIV = data.individual_stamina || 0;
     this.IV = ((this.attackIV + this.defenseIV + this.speedIV) / 45.0).toFixed(2);
     this.creationTime = data.creation_time_ms || 0;
-    this.health = data.stamina; // apparently this is HP
-    this.maxHealth = data.stamina_max; // and this is max HP.. I know, weird, right?
+    this.health = data.stamina || 0; // apparently this is HP
+    this.maxHealth = data.stamina_max || 0; // and this is max HP.. I know, weird, right?
     this.candy = mapView.getCandy(this.id, username);
   }
 

@@ -234,39 +234,6 @@ var mapView = {
         $('#subtitle').html('Trainer Info');
         $('#sortButtons').html('');
 
-        /*out += '<div class="row"><div class="col s12"><h5>' +
-          self.settings.users[user_id] +
-          '</h5><br>Level: ' +
-          current_user_stats.level +
-          '<br><div class="progress botbar-' + user_id + '" style="height: 10px"> <div class="determinate bot-' + user_id + '" style="width: '+
-          (current_user_stats.experience/
-          current_user_stats.next_level_xp) * 100 +
-          '%"></div></div>Exp: ' +
-          current_user_stats.experience +
-          '<br>Exp to Lvl ' +
-          (parseInt(current_user_stats.level, 10) + 1) +
-          ': ' +
-          (parseInt(current_user_stats.next_level_xp, 10) - current_user_stats.experience) +
-          '<br>Pokemon Encountered: ' +
-          (current_user_stats.pokemons_encountered || 0) +
-          '<br>Pokeballs Thrown: ' +
-          (current_user_stats.pokeballs_thrown || 0) +
-          '<br>Pokemon Caught: ' +
-          (current_user_stats.pokemons_captured || 0) +
-          '<br>Small Ratata Caught: ' +
-          (current_user_stats.small_rattata_caught || 0) +
-          '<br>Pokemon Evolved: ' +
-          (current_user_stats.evolutions || 0) +
-          '<br>Eggs Hatched: ' +
-          (current_user_stats.eggs_hatched || 0) +
-          '<br>Unique Pokedex Entries: ' +
-          (current_user_stats.unique_pokedex_entries || 0) +
-          '<br>PokeStops Visited: ' +
-          (current_user_stats.poke_stop_visits || 0) +
-          '<br>Kilometers Walked: ' +
-          (parseFloat(current_user_stats.km_walked).toFixed(2) || 0) +
-          '</div></div>';*/
-
         var exp_for_current_level = current_user_stats.experience - self.calculateTotalPreviousExps(current_user_stats.level),
           exp_to_level_percentage = exp_for_current_level / exps_per_level[current_user_stats.level] * 100;
 
@@ -275,9 +242,9 @@ var mapView = {
           '</h5><br>Level: ' +
           current_user_stats.level +
           '<br><div class="progress botbar-' + user_id + '" style="height: 30px"><div class="determinate bot-' + user_id + '" style="width: '+
-          Number(Math.round(exp_to_level_percentage+'e2')+'e-2') +
+          parseFloat(exp_to_level_percentage).toFixed(2) +
           '%"></div><span class="progress-text">' +
-          Number(Math.round(exp_to_level_percentage+'e2')+'e-2') +
+          parseFloat(exp_to_level_percentage).toFixed(2) +
           '%</span></div>Accumulated Experience: ' +
           current_user_stats.experience +
           '<br>Experience to Level ' +
