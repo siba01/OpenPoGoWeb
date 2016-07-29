@@ -616,6 +616,7 @@ var mapView = {
                   lat: parseFloat(fort.latitude),
                   lng: parseFloat(fort.longitude)
                 },
+                zIndex: 1,
                 icon: 'image/forts/img_pokestop.png'
               });
             } else {
@@ -625,6 +626,7 @@ var mapView = {
                   lat: parseFloat(fort.latitude),
                   lng: parseFloat(fort.longitude)
                 },
+                zIndex: 2,
                 icon: 'image/forts/' + self.teams[(fort.owned_by_team || 0)] + '.png'
               });
             }
@@ -685,11 +687,11 @@ var mapView = {
         },
         //icon: 'image/trainer/' + self.trainerSex[randomSex] + Math.floor(Math.random() * self.numTrainers[randomSex] + 1) + '.png',
         icon: 'image/trainer/pokeball.png', // forced trainer icon
-        zIndex: 2,
+        zIndex: 3,
         //label: username,
         clickable: true
       });
-      var contentString = '<b>Trainer:</b> ' + username;
+      var contentString = '<b>Trainer:</b> ' + 'SomeRandomUsername';
       self.user_data[username].infowindow = new google.maps.InfoWindow({
         content: contentString
       });
