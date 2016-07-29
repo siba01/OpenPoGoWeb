@@ -357,7 +357,7 @@ var mapView = {
     var self = this,
       users = self.settings.users;
     var out = '<div class="col s12"><ul id="bots-list" class="collapsible" data-collapsible="accordion"> \
-              <li><div class="collapsible-header"><i class="material-icons">people</i>Bots</div></li>';
+              <li><div class="collapsible-title"><i class="material-icons">people</i>Bots</div></li>';
 
     for (var i = 0; i < users.length; i++) {
       var content = '<li class="bot-user">\
