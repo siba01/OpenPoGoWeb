@@ -4,8 +4,8 @@ var logger = new Logger("#logs-panel .card-content");
 
 $(document).ready(function() {
   mapView.init();
-  /*
-  var socket = io.connect('http://' + document.domain + ':' + location.port + '/event');
+  // https://github.com/PokemonGoF/PokemonGo-Bot doesn't support WebSocket. Suppress error by disabling this entirely
+  /*var socket = io.connect('http://' + document.domain + ':' + location.port + '/event');
 
   socket.on('connect', function() {
     console.log('connected!');
@@ -633,12 +633,12 @@ var mapView = {
               fortType = 'PokeStop',
               pokemonGuard = '';
             if (fort.guard_pokemon_id != undefined) {
-              fortPoints = 'Points: ' + fort.gym_points;
-              fortTeam = 'Team: ' + self.teams[fort.owned_by_team] + '<br>';
+              fortPoints = '<b>Points:</b> ' + fort.gym_points;
+              fortTeam = '<b>Team:</b> ' + self.teams[fort.owned_by_team] + '<br>';
               fortType = 'Gym';
-              pokemonGuard = 'Guard Pokemon: ' + (Pokemon.getPokemonById(fort.guard_pokemon_id).Name || "None") + '<br>';
+              pokemonGuard = '<b>Guard Pokemon:</b> ' + (Pokemon.getPokemonById(fort.guard_pokemon_id).Name || "None") + '<br>';
             }
-            var contentString = 'Id: ' + fort.id + '<br>Type: ' + fortType + '<br>' + pokemonGuard + fortPoints;
+            var contentString = '<b>ID:</b> ' + fort.id + '<br><b>Type:</b> ' + fortType + '<br>' + pokemonGuard + fortPoints;
             self.info_windows[fort.id] = new google.maps.InfoWindow({
               content: contentString
             });
@@ -684,11 +684,21 @@ var mapView = {
           lng: parseFloat(data.lng)
         },
         //icon: 'image/trainer/' + self.trainerSex[randomSex] + Math.floor(Math.random() * self.numTrainers[randomSex] + 1) + '.png',
-        icon: 'image/trainer/m46.png', // forced trainer icon
+        icon: 'image/trainer/pokeball.png', // forced trainer icon
         zIndex: 2,
-        label: username,
-        clickable: false
+        //label: username,
+        clickable: true
       });
+      var contentString = '<b>Trainer:</b> ' + username;
+      self.user_data[username].infowindow = new google.maps.InfoWindow({
+        content: contentString
+      });
+      google.maps.event.addListener(self.user_data[username].marker, 'click', (function(marker, content, infowindow) {
+        return function() {
+          infowindow.setContent(content);
+          infowindow.open(map, marker);
+        };
+      })(self.user_data[username].marker, contentString, self.user_data[username].infowindow));
     } else {
       self.user_data[username].marker.setPosition({
         lat: parseFloat(data.lat),
