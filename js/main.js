@@ -691,7 +691,7 @@ var mapView = {
         //label: username,
         clickable: true
       });
-      var contentString = '<b>Trainer:</b> ' + 'SomeRandomUsername';
+      var contentString = '<b>Trainer:</b> ' + username;
       self.user_data[username].infowindow = new google.maps.InfoWindow({
         content: contentString
       });
