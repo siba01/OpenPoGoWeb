@@ -21,13 +21,17 @@ $(document).ready(function() {
   });*/
 });
 
-function loadJSON(path) {
+function loadJSON(path, extra) {
   return new Promise(function(fulfill, reject) {
     $.get({
       url: path + "?" + Date.now()
     }).done(function(data) {
       if(data !== undefined) {
-        fulfill(data);
+        if (extra == undefined) {
+          fulfill(data);
+        } else {
+          fulfill([data, extra]); // pass extra data if necessary - to solve out-of-sync username info
+        }
       } else {
         reject(data);
       }
@@ -205,8 +209,9 @@ var mapView = {
     var self = mapView;
     for (var i = 0; i < self.settings.users.length; i++) {
       var username = self.settings.users[i];
-      loadJSON('catchable-' + username + '.json').then(function(data) {
-        self.catchSuccess(data, username);
+      loadJSON('catchable-' + username + '.json', username).then(function(data) {
+        // data[0] contains the necessary data, data[1] contains the username
+        self.catchSuccess(data[0], data[1]);
       });
     }
   },
@@ -214,8 +219,9 @@ var mapView = {
     var self = mapView;
     for (var i = 0; i < self.settings.users.length; i++) {
       var username = self.settings.users[i];
-      loadJSON('inventory-' + username + '.json').then(function(data) {
-        self.user_data[username].updateInventory(data, username); // Pass username to be used to get candy num for Pokemon and Pokedex constructors.. I may need better method than this
+      var a = loadJSON('inventory-' + username + '.json', username).then(function(data) {
+        // data[0] contains the necessary data, data[1] contains the username
+        self.user_data[data[1]].updateInventory(data[0], data[1]); // Pass username to be used to get candy num for Pokemon and Pokedex constructors.. I may need better method than this
       });
     }
   },
@@ -461,8 +467,9 @@ var mapView = {
     var self = mapView;
     for (var i = 0; i < self.settings.users.length; i++) {
       var username = self.settings.users[i];
-      loadJSON('location-' + username + '.json').then(function(data) {
-        self.trainerFunc(data, username);
+      loadJSON('location-' + username + '.json', username).then(function(data) {
+        // data[0] contains the necessary data, data[1] contains the username
+        self.trainerFunc(data[0], data[1]);
       });
     }
   },
