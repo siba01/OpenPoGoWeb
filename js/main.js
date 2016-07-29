@@ -5,7 +5,7 @@ var logger = new Logger("#logs-panel .card-content #logs");
 $(document).ready(function() {
   mapView.init();
   // https://github.com/PokemonGoF/PokemonGo-Bot doesn't support WebSocket. Suppress error by disabling this entirely
-  /*var socket = io.connect('http://' + document.domain + ':8000' + '/event');
+  /*var socket = io.connect('http://' + document.domain + ':' + location.port + '/event');
 
   socket.on('connect', function() {
     console.log('connected!');
