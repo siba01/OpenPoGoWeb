@@ -247,12 +247,16 @@ var mapView = {
           exp_to_level_percentage = exp_for_current_level / exps_per_level[current_user_stats.level] * 100;
 
         out += '<div class="row"><div class="col s12"><h5>' +
-          self.settings.users[user_id] +
+          user_id +
           '</h5><br>Level: ' +
           current_user_stats.level +
-          '<br><div class="progress botbar-' + user_id + ' bot-exp-bar"><div class="determinate bot-' + user_id + '" style="width: '+
+          '<br><div class="progress bot-exp-bar" style="background-color: ' +
+          self.settings.users[user_id].colors.secondary +
+          '"><div class="determinate" style="width: '+
           parseFloat(exp_to_level_percentage).toFixed(2) +
-          '%"></div><span class="progress-text">' +
+          '%; background-color: ' +
+          self.settings.users[user_id].colors.primary +
+          '"></div><span class="progress-text">' +
           parseFloat(exp_to_level_percentage).toFixed(2) +
           '%</span></div>Accumulated Experience: ' +
           current_user_stats.experience +
@@ -359,21 +363,26 @@ var mapView = {
     var out = '<div class="col s12"><ul id="bots-list" class="collapsible" data-collapsible="accordion"> \
               <li><div class="collapsible-title"><i class="material-icons">people</i>Bots</div></li>';
 
-    var i = 0; // indicator (is this even necessary?)
+    var i = 0;
     for (var user in users) {
-      var content = '<li class="bot-user">\
-            <div class="collapsible-header bot-name">{0}</div>\
-                <div class="collapsible-body">\
-                    <ul class="bot-items" data-user-id="{0}" data-user-sub-id="{1}">\
-                       <li><a class="bot-{1} waves-effect waves-light btn tInfo">Info</a></li><br>\
-                       <li><a class="bot-{1} waves-effect waves-light btn tItems">Items</a></li><br>\
-                       <li><a class="bot-{1} waves-effect waves-light btn tPokemon">Pokemon</a></li><br>\
-                       <li><a class="bot-{1} waves-effect waves-light btn tPokedex">Pokedex</a></li><br>\
-                       <li><a class="bot-{1} waves-effect waves-light btn tFind">Find</a></li>\
-                   </ul>\
-               </div>\
-           </li>';
-      out += content.format(user, i); i += 1;
+      // for consistency sake
+      out += '<li class="bot-user">' +
+        '<div class="collapsible-header bot-name">' + user + '</div>' +
+        '<div class="collapsible-body">' +
+          '<ul class="bot-items" data-user-id="' + user + '">' +
+            '<li><a class="bot-btn-' + i + ' waves-effect waves-light btn tInfo">Info</a></li><br>' +
+            '<li><a class="bot-btn-' + i + ' waves-effect waves-light btn tItems">Items</a></li><br>' +
+            '<li><a class="bot-btn-' + i + ' waves-effect waves-light btn tPokemon">Pokemon</a></li><br>' +
+            '<li><a class="bot-btn-' + i + ' waves-effect waves-light btn tPokedex">Pokedex</a></li><br>' +
+            '<li><a class="bot-btn-' + i + ' waves-effect waves-light btn tFind">Find</a></li>' +
+          '</ul>' +
+        '</div>' +
+      '</li>' +
+      '<style>' +
+        '.bot-btn-' + i + ' { background-color: ' + self.settings.users[user].colors.primary + '; }' +
+        '.bot-btn-' + i + ':hover { background-color: ' + self.settings.users[user].colors.secondary + '; }' +
+      '</style>';
+      i += 1;
     }
     out += "</ul></div>";
     $('#trainers').html(out);

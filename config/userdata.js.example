@@ -1,15 +1,40 @@
 // MUST CONFIGURE THE USER ARRAY AND GOOGLE MAPS API KEY.
 // YOU CAN GET A KEY HERE: https://developers.google.com/maps/documentation/javascript/get-api-key
 var userInfo = {
-	users: {
+    users: {
         /*
-         * 'color' will be used to color the bot path in the map (mandatory)
-         * 'icon' is the path to the trainer icon (mandatory)
-         * 'focus' will define whether the map should focus this user in the first load (will only be used when there are more than 1 user, optional)
+         * 'colors > path' will be used to color the bot's path in the map (mandatory)
+         * 'colors > primary' will be used as the primary color for buttons in the bot menu and experience bar in the trainer info submenu (mandatory)
+         * 'colors > secondary' will be used as the secondary color for buttons in the bot menu and experience bar in the trainer info submenu (mandatory)
+         * 'icon' is the path to the trainer icon which will be used as the bot's marker in the map (mandatory)
+         * 'focus' will define whether the bot should be focused in the first load (optional, this will only be used when there are more than 1 user)
          */
-        "YOUR_USERNAME": { color: "#00f", icon: "image/trainer/pokeball.png", focus: true },
-        // "YOUR_OTHER_USERNAME": { color: "#f00", icon: "image/trainer/m46.png" },
-        // "YOUR_OTHER_USERNAME": { color: "#0f0", icon: "image/trainer/f87.png" },
+
+        "YOUR_USERNAME": {
+            colors: {
+                path: "#2471a3",
+                primary: "#2471a3",
+                secondary: "#a9cce3"
+            },
+            icon: "image/trainer/pokeball.png",
+            focus: true
+        },
+        /*"YOUR_OTHER_USERNAME": {
+            colors: {
+                path: "#a93226",
+                primary: "#a93226",
+                secondary: "#e6b0aa"
+            },
+            icon: "image/trainer/m46.png"
+        },
+        "YOUR_OTHER_USERNAME": {
+            colors: {
+                path: "#884eA0",
+                primary: "#884eA0",
+                secondary: "#d7bde2"
+            },
+            icon: "image/trainer/f87.png"
+        },*/
     },
 	userZoom: true,
 	zoom: 16,
