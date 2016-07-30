@@ -464,7 +464,7 @@ var mapView = {
     });
   },
   getCandy: function(p_num, user_id) {
-    var self = mapView,
+    var self = this,
       user = self.user_data[user_id];
 
     for (var i = 0; i < user.bagCandy.length; i++) {
