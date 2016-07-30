@@ -47,7 +47,8 @@ var exps_per_level = {
     11: 10000, 12: 10000, 13: 10000, 14: 15000, 15: 20000, 16: 20000, 17: 20000, 18: 25000, 19: 25000, 20: 50000,
     21: 75000, 22: 100000, 23: 125000, 24: 150000, 25: 190000, 26: 200000, 27: 250000, 28: 300000, 29: 350000, 30: 500000,
     31: 500000, 32: 750000, 33: 1000000, 34: 1250000, 35: 1500000, 36: 2000000, 37: 2500000, 38: 3000000, 39: 5000000, 40: 5000000
-  };
+  },
+  focusedFirstUser = false;
 
 var mapView = {
   user_index: 0,
@@ -382,18 +383,25 @@ var mapView = {
     var self = mapView,
       user = self.user_data[username],
       poke_name = '';
-    if (data !== undefined && Object.keys(data).length > 0) {
-      if (user.catchables === undefined) {
-        user.catchables = {};
-      }
+    if (data !== undefined && Object.keys(data).length) {
+      if (user.catchable == undefined) { user.catchable = {}; }
       if (data.latitude !== undefined) {
-        if (user.catchables.hasOwnProperty(data.spawnpoint_id) === false) {
-          poke_name = Pokemon.getPokemonById(data.pokemon_id).Name;
+        // Remove last Pokemon if it's not the current Pokemon
+        if (Object.keys(user.catchable).length && user.catchable.encounter_id != data.encounter_id) {
           logger.log({
-            message: "[" + username + "] " + poke_name + " appeared",
+            message: "[" + username + "] " + user.catchable.name + " has been caught or fled"
+          });
+          user.catchable.marker.setMap(null);
+          user.catchable = {};
+        }
+        // Process current Pokemon if last Pokemon didn't exist or was of a different instance
+        if (!Object.keys(user.catchable).length) {
+          user.catchable.name = Pokemon.getPokemonById(data.pokemon_id).Name;
+          logger.log({
+            message: "[" + username + "] " + user.catchable.name + " appeared",
             color: "green"
           });
-          user.catchables[data.spawnpoint_id] = new google.maps.Marker({
+          user.catchable.marker = new google.maps.Marker({
             map: self.map,
             position: {
               lat: parseFloat(data.latitude),
@@ -407,35 +415,17 @@ var mapView = {
             //optimized: false, // need to figure out what this does - one thing that I know, zIndex gets ignored when this param exists
             clickable: false
           });
-          if (self.settings.userZoom === true) {
-            self.map.setZoom(self.settings.zoom);
-          }
-          if (self.settings.userFollow === true) {
-            self.map.panTo({
-              lat: parseFloat(data.latitude),
-              lng: parseFloat(data.longitude)
-            });
-          }
-        } else {
-          user.catchables[data.spawnpoint_id].setPosition({
-            lat: parseFloat(data.latitude),
-            lng: parseFloat(data.longitude)
-          });
-          user.catchables[data.spawnpoint_id].setIcon({
-            url: 'image/pokemon/' + Pokemon.getImageById(data.pokemon_id),
-            scaledSize: new google.maps.Size(70, 70)
-          });
+          user.catchable.encounter_id = data.encounter_id;
         }
       }
     } else {
-      if (user.catchables !== undefined && Object.keys(user.catchables).length > 0) {
+      // very unlikely to be triggered with PokemonGoF as it doesn't seem to clear catchable file after successfully capturing the Pokemon
+      if (Object.keys(user.catchable).length > 0) {
         logger.log({
-          message: "[" + username + "] " + poke_name + " has been caught or fled"
+          message: "[" + username + "] " + user.catchable.name + " has been caught or fled"
         });
-        for (var key in user.catchables) {
-          user.catchables[key].setMap(null);
-        }
-        user.catchables = undefined;
+        user.catchable.marker.setMap(null);
+        user.catchable = undefined;
       }
     }
   },
@@ -736,6 +726,14 @@ var mapView = {
         lat: parseFloat(data.lat),
         lng: parseFloat(data.lng)
       });
+    }
+    if (!focusedFirstUser && self.settings.users.length > 1 && username == self.settings.users[0] && self.settings.firstUserFocus) {
+      self.map.setZoom(self.settings.zoom);
+      self.map.panTo({
+        lat: parseFloat(data.lat),
+        lng: parseFloat(data.lng)
+      });
+      focusedFirstUser = true;
     }
   },
 };

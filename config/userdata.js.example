@@ -3,6 +3,7 @@
 var userInfo = {
 	users: ["username"],
 	userZoom: true,
+    firstUserFocus: true, // TO BE USED WHEN THERE ARE MORE THAN 1 USER
 	zoom: 16,
 	userFollow: true,
     botPath: true,
