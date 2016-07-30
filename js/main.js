@@ -722,7 +722,7 @@ var mapView = {
           map: self.map,
           path: self.pathcoords[username],
           geodisc: true,
-          strokeColor: self.settings.users[username].color,
+          strokeColor: self.settings.users[username].colors.path,
           strokeOpacity: 0.0,
           strokeWeight: 2
         });
