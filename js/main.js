@@ -48,7 +48,7 @@ var exps_per_level = {
     21: 75000, 22: 100000, 23: 125000, 24: 150000, 25: 190000, 26: 200000, 27: 250000, 28: 300000, 29: 350000, 30: 500000,
     31: 500000, 32: 750000, 33: 1000000, 34: 1250000, 35: 1500000, 36: 2000000, 37: 2500000, 38: 3000000, 39: 5000000, 40: 5000000
   },
-  focusedFirstUser = false;
+  hasFocused = false;
 
 var mapView = {
   user_index: 0,
@@ -69,7 +69,7 @@ var mapView = {
     'm',
     'f'
   ],
-  pathColors: [
+  /*pathColors: [
     '#A93226',
     '#884EA0',
     '#2471A3',
@@ -84,7 +84,7 @@ var mapView = {
     '#28B463',
     '#D68910',
     '#BA4A00'
-  ],
+  ],*/ // obsolote
   playerInfo: {},
   user_data: {},
   pathcoords: {},
@@ -98,10 +98,9 @@ var mapView = {
 
     loadJSON('data/pokemoncandy.json').then(Pokemon.setPokemonCandyData);
 
-    for (var i = 0; i < self.settings.users.length; i++) {
-      var username = self.settings.users[i];
-      self.user_data[username] = new Player(username);
-      self.pathcoords[username] = [];
+    for (var user in self.settings.users) {
+      self.user_data[user] = new Player(user);
+      self.pathcoords[user] = [];
     }
 
     $.getScript('https://maps.googleapis.com/maps/api/js?key={0}&libraries=drawing'.format(self.settings.gMapsAPIKey), function() {
@@ -110,11 +109,12 @@ var mapView = {
   },
   setBotPathOptions: function(checked) {
       var self = this;
-      for (var i = 0; i < self.settings.users.length; i++) {
-        var trainerPath = self.user_data[self.settings.users[i]].trainerPath;
+      for (var user in self.settings.users) {
+        var trainerPath = self.user_data[user].trainerPath;
         if (!trainerPath) { continue; } // failsafe, in case user data hasn't been fully loaded
-        self.user_data[self.settings.users[i]].trainerPath.setOptions({
-          strokeOpacity: checked ? 1.0 : 0.0
+        self.user_data[user].trainerPath.setOptions({
+          strokeOpacity: (checked ? 1.0 : 0.0),
+          zIndex: (checked ? 4 : 0)
         });
       }
   },
@@ -209,9 +209,8 @@ var mapView = {
   },
   addCatchable: function() {
     var self = mapView;
-    for (var i = 0; i < self.settings.users.length; i++) {
-      var username = self.settings.users[i];
-      loadJSON('catchable-' + username + '.json', username).then(function(data) {
+    for (var user in self.settings.users) {
+      loadJSON('catchable-' + user + '.json', user).then(function(data) {
         // data[0] contains the necessary data, data[1] contains the username
         self.catchSuccess(data[0], data[1]);
       });
@@ -219,9 +218,8 @@ var mapView = {
   },
   addInventory: function() {
     var self = mapView;
-    for (var i = 0; i < self.settings.users.length; i++) {
-      var username = self.settings.users[i];
-      var a = loadJSON('inventory-' + username + '.json', username).then(function(data) {
+    for (var user in self.settings.users) {
+      var a = loadJSON('inventory-' + user + '.json', user).then(function(data) {
         // data[0] contains the necessary data, data[1] contains the username
         self.user_data[data[1]].updateInventory(data[0], data[1]); // Pass username to be used to get candy num for Pokemon and Pokedex constructors.. I may need better method than this
       });
@@ -240,7 +238,7 @@ var mapView = {
     $("#submenu").show();
     switch (menu) {
       case 1:
-        var current_user_stats = self.user_data[self.settings.users[user_id]].stats;
+        var current_user_stats = self.user_data[user_id].stats;
         $('#subtitle').html('Trainer Info');
         $('#sortButtons').html('');
 
@@ -288,7 +286,7 @@ var mapView = {
         $('#subcontent').html(out);
         break;
       case 2:
-        var current_user_bag_items = self.user_data[self.settings.users[user_id]].bagItems,
+        var current_user_bag_items = self.user_data[user_id].bagItems,
           current_user_bag_items_total = 0;
 
         $('#sortButtons').html('');
@@ -315,7 +313,7 @@ var mapView = {
         $('#subtitle').html(current_user_bag_items_total + " item" + (current_user_bag_items_total !== 1 ? "s" : "") + " in Bag");
         break;
       case 3:
-        var pkmnTotal = self.user_data[self.settings.users[user_id]].bagPokemon.length;
+        var pkmnTotal = self.user_data[user_id].bagPokemon.length;
         $('#subtitle').html(pkmnTotal + " Pokemon");
 
         var sortButtons = '<div class="col s12 pokemon-sort" data-user-id="' + user_id + '">Sort : ';
@@ -335,7 +333,7 @@ var mapView = {
         self.sortAndShowBagPokemon('cp', user_id);
         break;
       case 4:
-        var pkmnTotal = self.user_data[self.settings.users[user_id]].pokedex.getNumEntries();
+        var pkmnTotal = self.user_data[user_id].pokedex.getNumEntries();
         $('#subtitle').html('Pokedex ' + pkmnTotal + ' / 151');
 
         var sortButtons = '<div class="col s12 pokedex-sort" dat-user-id="' + user_id + '">Sort : ';
@@ -360,20 +358,21 @@ var mapView = {
     var out = '<div class="col s12"><ul id="bots-list" class="collapsible" data-collapsible="accordion"> \
               <li><div class="collapsible-title"><i class="material-icons">people</i>Bots</div></li>';
 
-    for (var i = 0; i < users.length; i++) {
+    var i = 0; // indicator (is this even necessary?)
+    for (var user in users) {
       var content = '<li class="bot-user">\
             <div class="collapsible-header bot-name">{0}</div>\
                 <div class="collapsible-body">\
-                    <ul class="bot-items" data-user-id="{1}">\
-                       <li><a class="bot-' + i + ' waves-effect waves-light btn tInfo">Info</a></li><br>\
-                       <li><a class="bot-' + i + ' waves-effect waves-light btn tItems">Items</a></li><br>\
-                       <li><a class="bot-' + i + ' waves-effect waves-light btn tPokemon">Pokemon</a></li><br>\
-                       <li><a class="bot-' + i + ' waves-effect waves-light btn tPokedex">Pokedex</a></li><br>\
-                       <li><a class="bot-' + i + ' waves-effect waves-light btn tFind">Find</a></li>\
+                    <ul class="bot-items" data-user-id="{0}" data-user-sub-id="{1}">\
+                       <li><a class="bot-{1} waves-effect waves-light btn tInfo">Info</a></li><br>\
+                       <li><a class="bot-{1} waves-effect waves-light btn tItems">Items</a></li><br>\
+                       <li><a class="bot-{1} waves-effect waves-light btn tPokemon">Pokemon</a></li><br>\
+                       <li><a class="bot-{1} waves-effect waves-light btn tPokedex">Pokedex</a></li><br>\
+                       <li><a class="bot-{1} waves-effect waves-light btn tFind">Find</a></li>\
                    </ul>\
                </div>\
            </li>';
-      out += content.format(users[i], i);
+      out += content.format(user, i); i += 1;
     }
     out += "</ul></div>";
     $('#trainers').html(out);
@@ -392,6 +391,7 @@ var mapView = {
             message: "[" + username + "] " + user.catchable.name + " has been caught or fled"
           });
           user.catchable.marker.setMap(null);
+          user.catchable.infowindow.setMap(null);
           user.catchable = {};
         }
         // Process current Pokemon if last Pokemon didn't exist or was of a different instance
@@ -413,8 +413,18 @@ var mapView = {
             },
             zIndex: 3,
             //optimized: false, // need to figure out what this does - one thing that I know, zIndex gets ignored when this param exists
-            clickable: false
+            clickable: true
           });
+          var contentString = '<b>Spawn Point ID:</b> ' + data.spawn_point_id + '<br><b>Encounter ID:</b> ' + data.encounter_id + '<br><b>Name:</b> ' + user.catchable.name;
+          user.catchable.infowindow = new google.maps.InfoWindow({
+            content: contentString
+          });
+          google.maps.event.addListener(user.catchable.marker, 'click', (function(marker, content, infowindow) {
+            return function() {
+              infowindow.setContent(content);
+              infowindow.open(map, marker);
+            };
+          })(user.catchable.marker, contentString, user.catchable.infowindow));
           user.catchable.encounter_id = data.encounter_id;
         }
       }
@@ -425,6 +435,7 @@ var mapView = {
           message: "[" + username + "] " + user.catchable.name + " has been caught or fled"
         });
         user.catchable.marker.setMap(null);
+        user.catchable.infowindow.setMap(null);
         user.catchable = undefined;
       }
     }
@@ -434,8 +445,7 @@ var mapView = {
   },
   findBot: function(user_index) {
     var self = this,
-      username = self.settings.users[user_index],
-      coords = self.pathcoords[username][self.pathcoords[username].length - 1];
+      coords = self.pathcoords[user_index][self.pathcoords[user_index].length - 1];
 
     self.map.setZoom(self.settings.zoom);
     self.map.panTo({
@@ -456,9 +466,8 @@ var mapView = {
   },
   placeTrainer: function() {
     var self = mapView;
-    for (var i = 0; i < self.settings.users.length; i++) {
-      var username = self.settings.users[i];
-      loadJSON('location-' + username + '.json', username).then(function(data) {
+    for (var user in self.settings.users) {
+      loadJSON('location-' + user + '.json', user).then(function(data) {
         // data[0] contains the necessary data, data[1] contains the username
         self.trainerFunc(data[0], data[1]);
       });
@@ -468,7 +477,7 @@ var mapView = {
     var self = this,
       eggs = 0,
       out = '',
-      user = self.user_data[self.settings.users[user_id]],
+      user = self.user_data[user_id],
       user_id = user_id || 0;
 
     //if (!user.bagPokemon.length) return; // commented out because this will prevent Pokemon inventory from showing (including eggs) if there's no Pokemon
@@ -555,7 +564,7 @@ var mapView = {
     var self = this,
       out = '',
       user_id = (user_id || 0),
-      user = self.user_data[self.settings.users[user_id]];
+      user = self.user_data[user_id];
 
     out = '<div class="items"><div class="row">';
     var sortedPokedex = user.pokedex.getAllEntriesSorted(sortOn);
@@ -672,19 +681,14 @@ var mapView = {
         message: "Trainer loaded: " + username,
         color: "blue"
       });
-      //var randomSex = Math.floor(Math.random() * 1);
       self.user_data[username].marker = new google.maps.Marker({
         map: self.map,
         position: {
           lat: parseFloat(data.lat),
           lng: parseFloat(data.lng)
         },
-        //icon: 'image/trainer/' + self.trainerSex[randomSex] + Math.floor(Math.random() * self.numTrainers[randomSex] + 1) + '.png',
-        icon: {
-          url: 'image/trainer/pokeball.png', // forced trainer icon
-          //scaledSize: new google.maps.Size(40, 40)
-        },
-        zIndex: 4,
+        icon: self.settings.users[username].icon,
+        zIndex: 5,
         //label: username,
         clickable: true
       });
@@ -704,12 +708,12 @@ var mapView = {
         lng: parseFloat(data.lng)
       });
       if (self.pathcoords[username].length === 2) {
+        console.log(self.settings.users[username].color);
         self.user_data[username].trainerPath = new google.maps.Polyline({
           map: self.map,
           path: self.pathcoords[username],
           geodisc: true,
-          // Need to set proper stroke color
-          strokeColor: self.pathColors[0],
+          strokeColor: self.settings.users[username].color,
           strokeOpacity: 0.0,
           strokeWeight: 2
         });
@@ -718,22 +722,22 @@ var mapView = {
       }
     }
     self.setBotPathOptions(self.settings.botPath);
-    if (self.settings.users.length === 1 && self.settings.userZoom === true) {
+    if (Object.keys(self.settings.users).length === 1 && self.settings.userZoom === true) {
       self.map.setZoom(self.settings.zoom);
     }
-    if (self.settings.users.length === 1 && self.settings.userFollow === true) {
+    if (Object.keys(self.settings.users).length === 1 && self.settings.userFollow === true) {
       self.map.panTo({
         lat: parseFloat(data.lat),
         lng: parseFloat(data.lng)
       });
     }
-    if (!focusedFirstUser && self.settings.users.length > 1 && username == self.settings.users[0] && self.settings.firstUserFocus) {
+    if (!hasFocused && Object.keys(self.settings.users).length > 1 && self.settings.users[username].focus) {
       self.map.setZoom(self.settings.zoom);
       self.map.panTo({
         lat: parseFloat(data.lat),
         lng: parseFloat(data.lng)
       });
-      focusedFirstUser = true;
+      hasFocused = true;
     }
   },
 };
