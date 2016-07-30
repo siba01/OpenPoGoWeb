@@ -15,5 +15,6 @@ var userInfo = {
 	zoom: 16,
 	userFollow: true,
     botPath: true,
+    usePokemonGoMapStyle: false,
 	gMapsAPIKey: "YOUR_API_KEY_HERE"
 };
