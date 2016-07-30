@@ -708,7 +708,6 @@ var mapView = {
         lng: parseFloat(data.lng)
       });
       if (self.pathcoords[username].length === 2) {
-        console.log(self.settings.users[username].color);
         self.user_data[username].trainerPath = new google.maps.Polyline({
           map: self.map,
           path: self.pathcoords[username],
