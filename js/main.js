@@ -107,6 +107,8 @@ var mapView = {
   user_data: {},
   pathcoords: {},
   settings: {},
+  customPaths: {}, // array of custom paths for Paths menu
+  customPathsLine: 0, // polyline of all the custom paths for Paths menu
   init: function() {
     var self = this;
     self.settings = $.extend(true, self.settings, userInfo);
@@ -228,10 +230,14 @@ var mapView = {
       cookies = Cookies.get('mapStyle'),
       desiredStyle = cookies || self.settings.defaultMapStyle || undefined;
     self.map = new google.maps.Map(document.getElementById('map'), {
-      center: {lat: 50.0830986, lng: 6.7613762},
+      center: { lat: 50.0830986, lng: 6.7613762 },
       zoom: 8,
       mapTypeId: (desiredStyle && desiredStyle == 'satellite' ? 'satellite' : 'roadmap'),
-      styles: ((desiredStyle && desiredStyle != 'satellite' && mStyles[desiredStyle] && mStyles[desiredStyle].style) ? mStyles[desiredStyle].style : [])
+      styles: ((desiredStyle && desiredStyle != 'satellite' && mStyles[desiredStyle] && mStyles[desiredStyle].style) ? mStyles[desiredStyle].style : []),
+      streetViewControl: false,
+      mapTypeControl: false,
+      fullscreenControl: true,
+      fullscreenControlOptions: { position: google.maps.ControlPosition.TOP_LEFT }
     });
 
     var ops = $('#mapStyles');
@@ -253,6 +259,8 @@ var mapView = {
     setInterval(self.placeTrainer, 1000);
     setInterval(self.addCatchable, 1000);
     setInterval(self.addInventory, 5000);
+
+    self.bindPathMenu();
   },
   addCatchable: function() {
     var self = mapView;
@@ -855,6 +863,135 @@ var mapView = {
       hasFocused = true;
     }
   },
+  addPathMarker: function() {
+    var self = mapView,
+      i = Object.keys(self.customPaths).length;
+
+    self.customPaths[i] = {};
+
+    self.customPaths[i].marker = new google.maps.Marker({
+      position: self.map.getCenter(),
+      map: self.map,
+      draggable: true,
+      clickable: true,
+      title: 'Path #' + i
+    });
+
+    var mapCenter = self.map.getCenter(),
+      contentString = '<b>Path #{0}</b><br><b>Latitude:</b> {1}<br><b>Longitude:</b> {2}';
+
+    self.customPaths[i].infowindow = new google.maps.InfoWindow({ content: contentString.format(i, mapCenter.lat(), mapCenter.lng()) });
+
+    google.maps.event.addListener(self.customPaths[i].marker, 'click', (function(infowindow) {
+      return function() { infowindow.open(this.map, this); };
+    })(self.customPaths[i].infowindow));
+
+    google.maps.event.addListener(self.customPaths[i].marker, 'drag', (function(content, infowindow) {
+      return function() { infowindow.setContent(contentString.format(i, this.getPosition().lat(), this.getPosition().lng())); self.updatePathLine(); };
+    })(contentString, self.customPaths[i].infowindow));
+
+    google.maps.event.addListener(self.customPaths[i].marker, 'dragend', (function(content, infowindow) {
+      return function() { infowindow.setContent(contentString.format(i, this.getPosition().lat(), this.getPosition().lng())); self.updatePathLine(); }
+    })(contentString, self.customPaths[i].infowindow));
+
+    $('#path_delete').removeClass('disabled');
+    $('#paths_download').removeClass('disabled');
+    $('#paths_clear').removeClass('disabled');
+
+    self.updatePathLine();
+  },
+  deletePathMarker: function() {
+    var self = mapView,
+      i = Object.keys(self.customPaths).length;
+
+    if (!i || !self.customPaths[i-1]) { return; } // if customPaths array is empty or previous path doesn't exist
+
+    self.customPaths[i-1].marker.setMap(null);
+    self.customPaths[i-1].infowindow.setMap(null);
+    delete self.customPaths[i-1];
+
+    if (!Object.keys(self.customPaths).length) {
+      $('#path_delete').addClass('disabled');
+      $('#paths_download').addClass('disabled');
+      $('#paths_clear').addClass('disabled');
+    }
+
+    self.updatePathLine();
+  },
+  updatePathLine: function() {
+    var self = mapView;
+
+    if (!Object.keys(self.customPaths).length) { // if customPaths array is empty
+      self.customPathsLine.setMap(null);
+      self.customPathsLine = 0;
+      return;
+    }
+
+    var ps = [];//, tpos;
+    for (var p in self.customPaths) {
+      //tpos = self.customPaths[p].marker.getPosition();
+      //ps.push({ lat: tpos.lat(), lng: tpos.lng() });
+      ps.push(self.customPaths[p].marker.getPosition());
+    }
+
+    if (!self.customPathsLine) {
+      self.customPathsLine = new google.maps.Polyline({
+        path: ps,
+        geodesic: true,
+        strokeColor: '#FF0000',
+        strokeOpacity: 1.0,
+        strokeWeight: 2
+      });
+    }
+
+    self.customPathsLine.setOptions({path: ps});
+    self.customPathsLine.setMap(self.map);
+  },
+  generatePathFile: function() {
+    var self = mapView;
+
+    if (!Object.keys(self.customPaths).length) { return; } // if customPaths array is empty
+
+    var fileContent = '[';
+    for (var p in self.customPaths) {
+      fileContent += '\n\t{"location": "' + self.customPaths[p].marker.getPosition().lat() + ', ' + self.customPaths[p].marker.getPosition().lng() + '"}';
+    }
+    fileContent += '\n]';
+
+    var download = $('<a>');
+    download.attr('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(fileContent));
+    download.attr('download', 'path.json');
+    download.css('display', 'none');
+    $('body').append(download);
+    download[0].click();
+    download.remove();
+  },
+  clearPathMarkers: function() {
+    var self = mapView;
+
+    if (!Object.keys(self.customPaths).length) { return; } // if customPaths array is empty
+
+    for (var p in self.customPaths) {
+      self.customPaths[p].marker.setMap(null);
+      self.customPaths[p].infowindow.setMap(null);
+    }
+
+    self.customPaths = {};
+
+    $('#path_delete').addClass('disabled');
+    $('#paths_download').addClass('disabled');
+    $('#paths_clear').addClass('disabled');
+
+    self.updatePathLine();
+  },
+  bindPathMenu: function() {
+    var self = this;
+
+    $('#path_add').click(self.addPathMarker);
+    $('#path_delete').click(self.deletePathMarker);
+    $('#paths_download').click(self.generatePathFile);
+    $('#paths_clear').click(self.clearPathMarkers);
+  }
 };
 
 if (!String.prototype.format) {

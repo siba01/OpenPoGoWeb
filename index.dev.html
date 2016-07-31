@@ -63,7 +63,7 @@
                   <br>
                 </li>
                 <li>
-                  <a class='dropdown-button btn' data-activates='mapStyles'>Map Style</a>
+                  <a class='waves-effect waves-light dropdown-button btn' data-activates='mapStyles'>Map Style</a>
                   <ul id='mapStyles' class='dropdown-content'>
                     <li><a data-style="maps">Maps</a></li>
                     <li class="divider"></li>
@@ -79,7 +79,26 @@
         </ul>
         </div>
       </div>
-      <div class="row" id="trainers">
+      <div class="row" id="trainers"></div>
+      <div class="row">
+        <div class="col s12">
+          <ul class="collapsible" data-collapsible="accordion">
+            <li>
+              <div class="collapsible-header"><i class="material-icons">location_on</i>Paths</div>
+              <div class="collapsible-body">
+                <ul>
+                  <li><a class="waves-effect waves-light btn tooltipped" id="path_add" data-position="left" data-delay="50" data-tooltip="Add a marker at the center of the map">Add</a></li>
+                  <br>
+                  <li><a class="waves-effect waves-light btn disabled tooltipped" id="path_delete" data-position="left" data-delay="50" data-tooltip="Delete previous marker">Delete</a></li>
+                  <br>
+                  <li><a class="waves-effect waves-light btn disabled tooltipped" id="paths_download" data-position="left" data-delay="50" data-tooltip="Generate and download path file">Download</a></li>
+                  <br>
+                  <li><a class="waves-effect waves-light btn disabled tooltipped" id="paths_clear" data-position="left" data-delay="50" data-tooltip="Clear all existing markers">Clear</a></li>
+                </ul>
+              </div>
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
 
