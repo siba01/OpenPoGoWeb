@@ -301,7 +301,7 @@ var mapView = {
           exp_to_level_percentage = exp_for_current_level / expsPerLevel[current_user_stats.level] * 100;
 
         out += '<div class="row"><div class="col s12"><h5>' +
-          self.settings.users[user_id].displayName +
+          (self.settings.users[user_id].displayName ? self.settings.users[user_id].displayName : user_id) +
           '</h5><br>Level: ' +
           current_user_stats.level +
           '<br><div class="progress bot-exp-bar" style="background-color: ' +
@@ -421,7 +421,7 @@ var mapView = {
     for (var user in users) {
       // for consistency sake
       out += '<li class="bot-user">' +
-        '<div class="collapsible-header bot-name">' + users[user].displayName + '</div>' +
+        '<div class="collapsible-header bot-name">' + (users[user].displayName ? users[user].displayName : user) + '</div>' +
         '<div class="collapsible-body">' +
           '<ul class="bot-items" data-user-id="' + user + '">' +
             '<li><a class="bot-btn-' + i + ' waves-effect waves-light btn tInfo">Info</a></li><br>' +
@@ -471,7 +471,7 @@ var mapView = {
         // Remove last Pokemon if it's not the current Pokemon or the expiration time has passed
         if (userCatchableLength && ((user.catchable.encounter_id != data.encounter_id) || moment(user.catchable.expiration_timestamp_ms).isSameOrBefore(momentNow))) {
           logger.log({
-            message: "[" + self.settings.users[username].displayName + "] " + user.catchable.name + " has been caught or fled"
+            message: "[" + (self.settings.users[username].displayName ? self.settings.users[username].displayName : username) + "] " + user.catchable.name + " has been caught or fled"
           });
           user.catchable.marker.setMap(null);
           user.catchable.infowindow.setMap(null);
@@ -481,7 +481,7 @@ var mapView = {
         if (!userCatchableLength && !moment(data.expiration_timestamp_ms).isSameOrBefore(momentNow)) {
           user.catchable.name = Pokemon.getPokemonById(data.pokemon_id).Name;
           logger.log({
-            message: "[" + self.settings.users[username].displayName + "] " + user.catchable.name + " appeared",
+            message: "[" + (self.settings.users[username].displayName ? self.settings.users[username].displayName : username) + "] " + user.catchable.name + " appeared",
             color: "green"
           });
           user.catchable.marker = new google.maps.Marker({
@@ -523,7 +523,7 @@ var mapView = {
       // very unlikely to be triggered with PokemonGoF as it doesn't seem to clear catchable file after successfully capturing the Pokemon
       if (user.catchable !== undefined && Object.keys(user.catchable).length > 0) {
         logger.log({
-          message: "[" + self.settings.users[username].displayName + "] " + user.catchable.name + " has been caught or fled"
+          message: "[" + (self.settings.users[username].displayName ? self.settings.users[username].displayName : username) + "] " + user.catchable.name + " has been caught or fled"
         });
         user.catchable.marker.setMap(null);
         user.catchable.infowindow.setMap(null);
@@ -797,7 +797,7 @@ var mapView = {
       self.buildTrainerList();
       self.addInventory();
       logger.log({
-        message: "Trainer loaded: " + self.settings.users[username].displayName,
+        message: "Trainer loaded: " + (self.settings.users[username].displayName ? self.settings.users[username].displayName : username),
         color: "blue"
       });
       var iconSet = { url: self.settings.users[username].icon.path };

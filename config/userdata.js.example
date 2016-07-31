@@ -3,6 +3,7 @@
 var userInfo = {
 	users: {
 		/*
+		 * 'displayName' is merely for appearance sake, you still need to fill in your username in the "YOUR_USERNAME" or "YOUR_OTHER_USERNAME" area (optional)
 		 * 'colors > botPath' will be used to color the bot's path in the map (mandatory)
 		 * 'colors > primary' will be used as the primary color for buttons in the bot menu and experience bar in the trainer info submenu (mandatory)
 		 * 'colors > secondary' will be used as the secondary color for buttons in the bot menu and experience bar in the trainer info submenu (mandatory)
@@ -13,7 +14,7 @@ var userInfo = {
 		 */
 
 		"YOUR_USERNAME": {
-			displayName: "YOUR_DISPLAYNAME",
+			//displayName: "YOUR_DISPLAYNAME",
 			colors: {
 				botPath: "#2471a3",
 				primary: "#2471a3",
@@ -27,7 +28,7 @@ var userInfo = {
 			focus: true
 		},
 		/*"YOUR_OTHER_USERNAME": {
-			displayName: "YOUR_OTHER_DISPLAYNAME",
+			//displayName: "YOUR_OTHER_DISPLAYNAME",
 			colors: {
 				botPath: "#a93226",
 				primary: "#a93226",
@@ -40,7 +41,7 @@ var userInfo = {
 			}
 		},
 		"YOUR_OTHER_USERNAME": {
-			displayName: "YOUR_OTHER_DISPLAYNAME",
+			//displayName: "YOUR_OTHER_DISPLAYNAME",
 			colors: {
 				botPath: "#884eA0",
 				primary: "#884eA0",
