@@ -35,7 +35,7 @@ class Player {
     this.bagPokemon = [];
     for (var i = 0; i < data.length; i++) {
       var pokeData = data[i].inventory_item_data.pokemon_data;
-      if (pokeData.is_egg == true) {
+      if (pokeData.is_egg) {
         // TODO: show the pokemon inside eggs
         this.eggs++;
         continue;
