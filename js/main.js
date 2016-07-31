@@ -222,7 +222,14 @@ var mapView = {
 
   },
   initMap: function() {
-    var self = this;
+    var self = this,
+      mapStyle1 = [ 
+        { "featureType": "road", "elementType": "geometry.fill", "stylers": [ { "color": "#4f9f92" }, { "visibility": "on" } ] },
+        { "featureType": "water", "elementType": "geometry.stroke", "stylers": [ { "color": "#feff95" }, { "visibility": "on" }, { "weight": 1.2 } ] },
+        { "featureType": "landscape", "elementType": "geometry", "stylers": [ { "color": "#adff9d" }, { "visibility": "on" } ] },
+        { "featureType": "water", "stylers": [ { "visibility": "on" }, { "color": "#147dd9" } ] },
+        { "featureType": "poi", "elementType": "geometry.fill", "stylers": [ { "color": "#d3ffcc" } ] },{ "elementType": "labels", "stylers": [ { "visibility": "off" } ] } 
+      ];
     self.map = new google.maps.Map(document.getElementById('map'), {
       center: {
         lat: 50.0830986,
@@ -230,13 +237,7 @@ var mapView = {
       },
       zoom: 8,
       mapTypeId: 'roadmap',
-      styles: [ 
-        { "featureType": "road", "elementType": "geometry.fill", "stylers": [ { "color": "#4f9f92" }, { "visibility": "on" } ] },
-        { "featureType": "water", "elementType": "geometry.stroke", "stylers": [ { "color": "#feff95" }, { "visibility": "on" }, { "weight": 1.2 } ] },
-        { "featureType": "landscape", "elementType": "geometry", "stylers": [ { "color": "#adff9d" }, { "visibility": "on" } ] },
-        { "featureType": "water", "stylers": [ { "visibility": "on" }, { "color": "#147dd9" } ] },
-        { "featureType": "poi", "elementType": "geometry.fill", "stylers": [ { "color": "#d3ffcc" } ] },{ "elementType": "labels", "stylers": [ { "visibility": "off" } ] } 
-      ]
+      styles: ((self.settings.usePokemonGoMapStyle || self.settings.usePokemonGoMapStyle == undefined) ? mapStyle1 : []) // disable Pokemon Go map style only when explicitly instructed to
     });
     self.placeTrainer();
     self.addCatchable();
