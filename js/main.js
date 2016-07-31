@@ -641,11 +641,9 @@ var mapView = {
 
     // Display eggs and incubators
     out += '<div class="col s12 m4 l3 center"><img src="image/items/Egg.png" class="png_img"><br><b>You have ' + user.eggs + ' egg' + (user.eggs !== 1 ? "s" : "") + '</b></div>';
-    console.log(user.incubators);
     if (Object.keys(user.incubators)) {
       var incubators = user.incubators[0].inventory_item_data.egg_incubators.egg_incubator;
       for (var i = 0; i < incubators.length; i++) {
-        console.log(incubators[i]);
         var totalToWalk  = incubators[i].target_km_walked - incubators[i].start_km_walked,
           kmsLeft = incubators[i].target_km_walked - self.user_data[user_id].stats.km_walked,
           walked = totalToWalk - kmsLeft,
