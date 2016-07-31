@@ -415,7 +415,8 @@ var mapView = {
     var self = this,
       users = self.settings.users;
     var out = '<div class="col s12"><ul id="bots-list" class="collapsible" data-collapsible="accordion">' +
-      '<li><div class="collapsible-header"><i class="material-icons">people</i>Bots</div>' +
+      '<li><div class="collapsible-header' + (self.settings.collapseBotMenu || self.settings.collapseBotMenu == undefined ? ' active' : '') + '">' +
+      '<i class="material-icons">people</i>Bots</div>' +
       '<div class="collapsible-body" style="padding: 0; border: 0">' +
       '<ul class="collapsible bots-list-collapsible" data-collapsible="accordion" style="border: 0; margin: 0; box-shadow: none">';
 

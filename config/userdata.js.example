@@ -54,6 +54,7 @@ var userInfo = {
 			}
 		},*/
 	},
+	collapseBotMenu: true,
 	userZoom: true,
 	zoom: 16,
 	userFollow: true,
