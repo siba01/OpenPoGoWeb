@@ -409,10 +409,14 @@ var mapView = {
       user = self.user_data[username],
       poke_name = '';
     if (data !== undefined && Object.keys(data).length) {
-      if (user.catchable == undefined) { user.catchable = {}; }
+      if (user.catchable == undefined) {
+        user.catchable = {};
+      }
+      var userCatchableLength = Object.keys(user.catchable).length,
+        momentNow = moment();
       if (data.latitude !== undefined) {
-        // Remove last Pokemon if it's not the current Pokemon
-        if (Object.keys(user.catchable).length && user.catchable.encounter_id != data.encounter_id) {
+        // Remove last Pokemon if it's not the current Pokemon or the expiration time has passed
+        if (userCatchableLength && ((user.catchable.encounter_id != data.encounter_id) || moment(user.catchable.expiration_timestamp_ms).isSameOrBefore(momentNow))) {
           logger.log({
             message: "[" + self.settings.users[username].displayName + "] " + user.catchable.name + " has been caught or fled"
           });
@@ -420,8 +424,8 @@ var mapView = {
           user.catchable.infowindow.setMap(null);
           user.catchable = {};
         }
-        // Process current Pokemon if last Pokemon didn't exist or was of a different instance
-        if (!Object.keys(user.catchable).length) {
+        // Process current Pokemon if last Pokemon didn't exist or was of different instance and current Pokemon hasn't expired
+        if (!userCatchableLength && !moment(data.expiration_timestamp_ms).isSameOrBefore(momentNow)) {
           user.catchable.name = Pokemon.getPokemonById(data.pokemon_id).Name;
           logger.log({
             message: "[" + self.settings.users[username].displayName + "] " + user.catchable.name + " appeared",
@@ -441,7 +445,14 @@ var mapView = {
             //optimized: false, // need to figure out what this does - one thing that I know, zIndex gets ignored when this param exists
             clickable: true
           });
-          var contentString = '<b>Spawn Point ID:</b> ' + data.spawn_point_id + '<br><b>Encounter ID:</b> ' + data.encounter_id + '<br><b>Name:</b> ' + user.catchable.name;
+          var contentString = '<b>Spawn Point ID:</b> ' +
+            data.spawn_point_id +
+            '<br><b>Encounter ID:</b> ' +
+            data.encounter_id +
+            '<br><b>Name:</b> ' +
+            user.catchable.name +
+            '<br><br>This Pokemon will expire at ' +
+            moment(data.expiration_timestamp_ms).format('hh:mm:ss A');
           user.catchable.infowindow = new google.maps.InfoWindow({
             content: contentString
           });
@@ -452,6 +463,7 @@ var mapView = {
             };
           })(user.catchable.marker, contentString, user.catchable.infowindow));
           user.catchable.encounter_id = data.encounter_id;
+          user.catchable.expiration_timestamp_ms = data.expiration_timestamp_ms;
         }
       }
     } else {
@@ -693,7 +705,7 @@ var mapView = {
             } else {
               var fortType = '<b>Type:</b> Gym',
                 fortTeam = '<b>Team:</b> ' + self.teams[fort.owned_by_team],
-                fortGuardPokemon = '<b>Guard Pokemon:</b> ' + (Pokemon.getPokemonById(fort.guard_pokemon_id).Name || "None"),
+                fortGuardPokemon = '<b>Guard Pokemon:</b> ' + (fort.guard_pokemon_id == undefined ? 'None' : (Pokemon.getPokemonById(fort.guard_pokemon_id).Name || 'None')),
                 fortPoints = '<b>Points:</b> ' + fort.gym_points,
                 fortLevel = '<b>Gym Level:</b> ' + self.getGymLevel(fort.gym_points);
               contentString += '<br>' + fortType + '<br>' + fortTeam + '<br>' + fortGuardPokemon + '<br>' + fortPoints + '<br>' + fortLevel;
