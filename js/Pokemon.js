@@ -10,7 +10,7 @@ class Pokemon {
     this.creationTime = data.creation_time_ms || 0;
     this.health = data.stamina || 0; // apparently this is HP
     this.maxHealth = data.stamina_max || 0; // and this is max HP.. I know, weird, right?
-    this.candy = mapView.getCandy(this.id, username);
+    if (username) { this.candy = mapView.getCandy(this.id, username); }
   }
 
   static getPaddedId(id) {

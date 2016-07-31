@@ -289,15 +289,6 @@ html, body {
 		top: 1px;
 	}
 
-.row .col.l3 {
-	padding-top: 0.75rem;
-	padding-bottom: 0.75rem;
-	transition: background-color .2s;
-	border-radius: 2px;
-}
-
-	.row .col.l3:hover { background-color: #F7F7F7; }
-
 #sortButtons .chip {
 	height: initial;
 	font-size: initial;
@@ -322,7 +313,16 @@ html, body {
 		margin-top: 5px;
 	}
 
-.pkmn-info-container > span { display: block; }
+.pkmn-info-container {
+	padding-top: 0.75rem !important;
+	padding-bottom: 0.75rem !important;
+	transition: background-color .2s;
+	border-radius: 2px;
+}
+
+	.pkmn-info-container:hover { background-color: #F7F7F7; }
+
+	.pkmn-info-container > span { display: block; }
 
 .pkmn-info-cp > span {
 	font-size: 1.5em;
@@ -388,4 +388,25 @@ html, body {
 .pkmn-info-capture-time {
 	font-weight: bold;
 	cursor: default;
+}
+
+.gym-info {
+	display: block;
+	text-align: center;
+	font-weight: bold;
+}
+
+.gym-image {
+    width: 250px;
+    height: 250px;
+    background-size: 100%;
+    background-position: center;
+    border: 1px solid #ddd;
+    border-radius: 100%;
+    margin: 15px auto;
+}
+
+.gym-info-separator {
+	border-bottom: 1px solid #ddd;
+    margin: 15px 0;
 }

@@ -699,6 +699,79 @@ var mapView = {
     }
     return level;
   },
+  buildGymInfo: function(fort) {
+    if (!fort || !Object.keys(fort).length || !fort.gym_details) { return; } // if fort is not defined or if it's an empty object or if gym_details is not present
+
+    $("#submenu").show();
+
+    var self = this,
+      out = '',
+      gym_details = fort.gym_details;
+
+    if (!gym_details.gym_state) { return; } // failsafe
+    
+    var gym_memberships = gym_details.gym_state.memberships;
+
+    out += '<span class="gym-info">' + gym_details.name + '</span>' +
+      '<div class="gym-image" style="background-image: url(\'' + gym_details.urls[0] + '\')"></div>' +
+      '<div class="gym-info-separator"></div>';
+
+    if (fort.owned_by_team && gym_memberships && gym_memberships.length) {
+      out += '<b>Team:</b> ' + self.teams[fort.owned_by_team] + '<br>' +
+        '<b>Points:</b> ' + fort.gym_points + '<br>' +
+        '<b>Gym Level:</b> ' + self.getGymLevel(fort.gym_points)  +
+        '<div class="gym-info-separator"></div>' +
+        '<div class="row">';
+      for (var m = 0; m < gym_memberships.length; m++) {
+        var gymPokemon = new Pokemon(gym_memberships[m].pokemon_data);
+        var pkmnNum = gymPokemon.id,
+          pkmnImage = Pokemon.getImageById(gymPokemon.id),
+          pkmnName = Pokemon.getNameById(pkmnNum),
+          pkmnCP = gymPokemon.combatPower,
+          pkmnIV = gymPokemon.IV,
+          pkmnIVA = gymPokemon.attackIV,
+          pkmnIVD = gymPokemon.defenseIV,
+          pkmnIVS = gymPokemon.staminaIV,
+          pkmnHP = gymPokemon.health,
+          pkmnMHP = gymPokemon.maxHealth;
+
+        out += '<div class="col s12 m6 l4 center pkmn-info-container">' + 
+          '<span class="pkmn-info-cp">CP<span>' + pkmnCP + '</span></span>' +
+          '<span class="pkmn-info-img-container">' +
+            '<img class="png_img pkmn-info-img" src="image/pokemon/' + pkmnImage + '">' +
+          '</span>' +
+          '<span class="pkmn-info-name">' +
+            pkmnName +
+          '</span>' + 
+          '<div class="pkmn-info-hp-bar pkmn-' + pkmnNum + ' progress">' +
+            '<div class="determinate pkmn-' + pkmnNum + '" style="width: ' + (pkmnHP / pkmnMHP) * 100 +'%"></div>' +
+            '<span>' + pkmnHP + ' / ' + pkmnMHP + '</span>' +
+          '</div>'+
+          '<span class="pkmn-info-iv">' +
+            '<b>IV:</b> ' +
+            '<span class="' + (pkmnIV == 1 ? 'perfect' : (pkmnIV >= 0.8 ? 'solid' : '')) + '">' +
+              pkmnIV +
+            '</span>' +
+          '</span>' +
+          '<span>' +
+            '<b>A/D/S:</b> ' + pkmnIVA + '/' + pkmnIVD + '/' + pkmnIVS +
+          '</span>' +
+          '<span>' +
+            '<b>Trainer:</b> ' + gym_memberships[m].trainer_public_profile.name +
+          '</span>' +
+          '<span>' +
+            '<b>Trainer Level:</b> ' + gym_memberships[m].trainer_public_profile.level +
+          '</span>' +
+        '</div>';
+      }
+      out += '</div>';
+    } else {
+      out += 'This gym is not owned by any team.';
+    }
+
+    $('#subtitle').html('Gym Info');
+    $('#subcontent').html(out);
+  },
   trainerFunc: function(data, username) {
     var self = mapView,
       coords = self.pathcoords[username][self.pathcoords[username].length - 1];
@@ -732,27 +805,24 @@ var mapView = {
                 }
               });
             }
-            var fortType = '<b>Type:</b> PokeStop',
-              contentString = '<b>ID:</b> ' + fort.id;
             if (fort.type == 1) {
-              contentString += '<br>' + fortType; 
+              var contentString = '<b>ID:</b> ' + fort.id + '<br><b>Type:</b> PokeStop';
+              self.info_windows[fort.id] = new google.maps.InfoWindow({
+                content: contentString
+              });
             } else {
-              var fortType = '<b>Type:</b> Gym',
-                fortTeam = '<b>Team:</b> ' + self.teams[fort.owned_by_team],
-                fortGuardPokemon = '<b>Guard Pokemon:</b> ' + (fort.guard_pokemon_id == undefined ? 'None' : (Pokemon.getPokemonById(fort.guard_pokemon_id).Name || 'None')),
-                fortPoints = '<b>Points:</b> ' + fort.gym_points,
-                fortLevel = '<b>Gym Level:</b> ' + self.getGymLevel(fort.gym_points);
-              contentString += '<br>' + fortType + '<br>' + fortTeam + '<br>' + fortGuardPokemon + '<br>' + fortPoints + '<br>' + fortLevel;
+              self.info_windows[fort.id] = 0;
             }
-            self.info_windows[fort.id] = new google.maps.InfoWindow({
-              content: contentString
-            });
-            google.maps.event.addListener(self.forts[fort.id], 'click', (function(content, infowindow) {
+            google.maps.event.addListener(self.forts[fort.id], 'click', (function(content, infowindow, fort) {
               return function() {
-                infowindow.setContent(content);
-                infowindow.open(this.map, this);
+                if (infowindow) {
+                  infowindow.setContent(content);
+                  infowindow.open(this.map, this);
+                } else {
+                  self.buildGymInfo(fort);
+                }
               };
-            })(contentString, self.info_windows[fort.id]));
+            })(contentString, self.info_windows[fort.id], fort));
           }
         }
       }
