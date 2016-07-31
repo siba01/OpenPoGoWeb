@@ -414,12 +414,14 @@ var mapView = {
   buildTrainerList: function() {
     var self = this,
       users = self.settings.users;
-    var out = '<div class="col s12"><ul id="bots-list" class="collapsible" data-collapsible="accordion"> \
-              <li class="bots_head"><div class="collapsible-title"><i class="material-icons">people</i>Bots</div></li>';
+    var out = '<div class="col s12"><ul id="bots-list" class="collapsible" data-collapsible="accordion">' +
+      '<li><div class="collapsible-header"><i class="material-icons">people</i>Bots</div>' +
+      '<div class="collapsible-body" style="padding: 0; border: 0">' +
+      '<ul class="collapsible bots-list-collapsible" data-collapsible="accordion" style="border: 0; margin: 0; box-shadow: none">';
 
     var i = 0;
     for (var user in users) {
-      // for consistency sake
+      // Rewrote every line to be using string join instead of that '\' thingy for consistency sake (I mean, everything else does it that way, so..)
       out += '<li class="bot-user">' +
         '<div class="collapsible-header bot-name">' + (users[user].displayName ? users[user].displayName : user) + '</div>' +
         '<div class="collapsible-body">' +
@@ -438,23 +440,8 @@ var mapView = {
       '</style>';
       i += 1;
     }
-    out += "</ul></div>";
+    out += "</ul></div></li></ul></div>";
     $('#trainers').html(out);
-    var bots_collapsed = 1;
-    $(document).on('click', '.bots_head', function () {
-      var crt_display = 'block';
-      if (bots_collapsed == 0) {
-        bots_collapsed = 1;
-      } else {
-        crt_display = 'none';
-        bots_collapsed = 0;
-      }
-      $(this).parent().find('li').each(function () {
-        if (!$(this).hasClass('bots_head')) {
-          $(this).css('display', crt_display);
-        }
-      });
-    });
     $('.collapsible').collapsible();
   },
   catchSuccess: function(data, username) {
@@ -509,12 +496,12 @@ var mapView = {
           user.catchable.infowindow = new google.maps.InfoWindow({
             content: contentString
           });
-          google.maps.event.addListener(user.catchable.marker, 'click', (function(marker, content, infowindow) {
+          google.maps.event.addListener(user.catchable.marker, 'click', (function(content, infowindow) {
             return function() {
               infowindow.setContent(content);
-              infowindow.open(map, marker);
+              infowindow.open(this.map, this);
             };
-          })(user.catchable.marker, contentString, user.catchable.infowindow));
+          })(contentString, user.catchable.infowindow));
           user.catchable.encounter_id = data.encounter_id;
           user.catchable.expiration_timestamp_ms = data.expiration_timestamp_ms;
         }
@@ -760,12 +747,12 @@ var mapView = {
             self.info_windows[fort.id] = new google.maps.InfoWindow({
               content: contentString
             });
-            google.maps.event.addListener(self.forts[fort.id], 'click', (function(marker, content, infowindow) {
+            google.maps.event.addListener(self.forts[fort.id], 'click', (function(content, infowindow) {
               return function() {
                 infowindow.setContent(content);
-                infowindow.open(map, marker);
+                infowindow.open(this.map, this);
               };
-            })(self.forts[fort.id], contentString, self.info_windows[fort.id]));
+            })(contentString, self.info_windows[fort.id]));
           }
         }
       }
@@ -814,12 +801,12 @@ var mapView = {
       self.user_data[username].infowindow = new google.maps.InfoWindow({
         content: contentString
       });
-      google.maps.event.addListener(self.user_data[username].marker, 'click', (function(marker, content, infowindow) {
+      google.maps.event.addListener(self.user_data[username].marker, 'click', (function(content, infowindow) {
         return function() {
           infowindow.setContent(content);
-          infowindow.open(map, marker);
+          infowindow.open(this.map, this);
         };
-      })(self.user_data[username].marker, contentString, self.user_data[username].infowindow));
+      })(contentString, self.user_data[username].infowindow));
     } else {
       self.user_data[username].marker.setPosition({
         lat: parseFloat(data.lat),
