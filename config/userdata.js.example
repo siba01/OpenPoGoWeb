@@ -11,6 +11,7 @@ var userInfo = {
          */
 
         "YOUR_USERNAME": {
+            displayName: "YOUR_DISPLAYNAME",
             colors: {
                 path: "#2471a3",
                 primary: "#2471a3",
@@ -20,6 +21,7 @@ var userInfo = {
             focus: true
         },
         /*"YOUR_OTHER_USERNAME": {
+            displayName: "YOUR_OTHER_DISPLAYNAME",
             colors: {
                 path: "#a93226",
                 primary: "#a93226",
@@ -28,6 +30,7 @@ var userInfo = {
             icon: "image/trainer/m46.png"
         },
         "YOUR_OTHER_USERNAME": {
+            displayName: "YOUR_OTHER_DISPLAYNAME",
             colors: {
                 path: "#884eA0",
                 primary: "#884eA0",

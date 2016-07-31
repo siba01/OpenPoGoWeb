@@ -42,12 +42,13 @@ function loadJSON(path, extra) {
 }
 
 // Array of required EXPs to level up for each level
-var exps_per_level = {
-    0: 0, 1: 1000, 2: 2000, 3: 3000, 4: 4000, 5: 5000, 6: 6000, 7: 7000, 8: 8000, 9: 9000, 10: 10000,
+var exps_per_level = { 1: 1000, 2: 2000, 3: 3000, 4: 4000, 5: 5000, 6: 6000, 7: 7000, 8: 8000, 9: 9000, 10: 10000,
     11: 10000, 12: 10000, 13: 10000, 14: 15000, 15: 20000, 16: 20000, 17: 20000, 18: 25000, 19: 25000, 20: 50000,
     21: 75000, 22: 100000, 23: 125000, 24: 150000, 25: 190000, 26: 200000, 27: 250000, 28: 300000, 29: 350000, 30: 500000,
     31: 500000, 32: 750000, 33: 1000000, 34: 1250000, 35: 1500000, 36: 2000000, 37: 2500000, 38: 3000000, 39: 5000000, 40: 5000000
   },
+  // Array of minimum gym points per level
+  min_gp_per_level = { 1: 0, 2: 2000, 3: 4000, 4: 8000, 5: 12000, 6: 16000, 7: 20000, 8: 30000, 9: 40000, 10: 50000 },
   hasFocused = false;
 
 var mapView = {
@@ -230,7 +231,7 @@ var mapView = {
   {
     var t, i;
     t = 0;
-    for (i = 0; i < level; i++) { t += exps_per_level[i]; }
+    for (i = 1; i < level; i++) { t += exps_per_level[i]; }
     return t;
   },
   buildMenu: function(user_id, menu) {
@@ -247,7 +248,7 @@ var mapView = {
           exp_to_level_percentage = exp_for_current_level / exps_per_level[current_user_stats.level] * 100;
 
         out += '<div class="row"><div class="col s12"><h5>' +
-          user_id +
+          self.settings.users[user_id].displayName +
           '</h5><br>Level: ' +
           current_user_stats.level +
           '<br><div class="progress bot-exp-bar" style="background-color: ' +
@@ -361,13 +362,13 @@ var mapView = {
     var self = this,
       users = self.settings.users;
     var out = '<div class="col s12"><ul id="bots-list" class="collapsible" data-collapsible="accordion"> \
-              <li><div class="collapsible-title"><i class="material-icons">people</i>Bots</div></li>';
+              <li class="bots_head"><div class="collapsible-title"><i class="material-icons">people</i>Bots</div></li>';
 
     var i = 0;
     for (var user in users) {
       // for consistency sake
       out += '<li class="bot-user">' +
-        '<div class="collapsible-header bot-name">' + user + '</div>' +
+        '<div class="collapsible-header bot-name">' + users[user].displayName + '</div>' +
         '<div class="collapsible-body">' +
           '<ul class="bot-items" data-user-id="' + user + '">' +
             '<li><a class="bot-btn-' + i + ' waves-effect waves-light btn tInfo">Info</a></li><br>' +
@@ -379,13 +380,28 @@ var mapView = {
         '</div>' +
       '</li>' +
       '<style>' +
-        '.bot-btn-' + i + ' { background-color: ' + self.settings.users[user].colors.primary + '; }' +
-        '.bot-btn-' + i + ':hover { background-color: ' + self.settings.users[user].colors.secondary + '; }' +
+        '.bot-btn-' + i + ' { background-color: ' + users[user].colors.primary + '; }' +
+        '.bot-btn-' + i + ':hover { background-color: ' + users[user].colors.secondary + '; }' +
       '</style>';
       i += 1;
     }
     out += "</ul></div>";
     $('#trainers').html(out);
+    var bots_collapsed = 1;
+    $(document).on('click', '.bots_head', function () {
+      var crt_display = 'block';
+      if (bots_collapsed == 0) {
+        bots_collapsed = 1;
+      } else {
+        crt_display = 'none';
+        bots_collapsed = 0;
+      }
+      $(this).parent().find('li').each(function () {
+        if (!$(this).hasClass('bots_head')) {
+          $(this).css('display', crt_display);
+        }
+      });
+    });
     $('.collapsible').collapsible();
   },
   catchSuccess: function(data, username) {
@@ -398,7 +414,7 @@ var mapView = {
         // Remove last Pokemon if it's not the current Pokemon
         if (Object.keys(user.catchable).length && user.catchable.encounter_id != data.encounter_id) {
           logger.log({
-            message: "[" + username + "] " + user.catchable.name + " has been caught or fled"
+            message: "[" + self.settings.users[username].displayName + "] " + user.catchable.name + " has been caught or fled"
           });
           user.catchable.marker.setMap(null);
           user.catchable.infowindow.setMap(null);
@@ -408,7 +424,7 @@ var mapView = {
         if (!Object.keys(user.catchable).length) {
           user.catchable.name = Pokemon.getPokemonById(data.pokemon_id).Name;
           logger.log({
-            message: "[" + username + "] " + user.catchable.name + " appeared",
+            message: "[" + self.settings.users[username].displayName + "] " + user.catchable.name + " appeared",
             color: "green"
           });
           user.catchable.marker = new google.maps.Marker({
@@ -442,7 +458,7 @@ var mapView = {
       // very unlikely to be triggered with PokemonGoF as it doesn't seem to clear catchable file after successfully capturing the Pokemon
       if (Object.keys(user.catchable).length > 0) {
         logger.log({
-          message: "[" + username + "] " + user.catchable.name + " has been caught or fled"
+          message: "[" + self.settings.users[username].displayName + "] " + user.catchable.name + " has been caught or fled"
         });
         user.catchable.marker.setMap(null);
         user.catchable.infowindow.setMap(null);
@@ -485,7 +501,6 @@ var mapView = {
   },
   sortAndShowBagPokemon: function(sortOn, user_id) {
     var self = this,
-      eggs = 0,
       out = '',
       user = self.user_data[user_id],
       user_id = user_id || 0;
@@ -560,13 +575,32 @@ var mapView = {
     }
 
     // Add number of eggs
-    out += '<div class="col s12 m4 l3 center" style="float: left;"><img src="image/pokemon/Egg.png" class="png_img"><br><b>You have ' + eggs + ' egg' + (eggs !== 1 ? "s" : "") + '</div>';
+    out += '<div class="col s12 m4 l3 center" style="float: left;"><img src="image/items/Egg.png" class="png_img"><br><b>You have ' + user.eggs + ' egg' + (user.eggs !== 1 ? "s" : "") + '</div>';
+    for (var i = 0; i < user.incubators.length; i++) {
+      var incubator = user.incubators[i].inventory_item_data.egg_incubators.egg_incubator;
+      if (!incubator.item_id) {
+        var incubator = user.incubators[i].inventory_item_data.egg_incubators.egg_incubator[0];
+      }
+      var current_user_stats = self.user_data[user_id].stats;
+      var totalToWalk  = incubator.target_km_walked - incubator.start_km_walked;
+      var kmsLeft = incubator.target_km_walked - current_user_stats.km_walked;
+      var walked = totalToWalk - kmsLeft;
+      var eggString = (parseFloat(walked).toFixed(1) || 0) + " / " + (parseFloat(totalToWalk).toFixed(1) || 0) + "km";
+      if (incubator.item_id == 902) {
+        var img = 'EggIncubator';
+      } else {
+        var img = 'EggIncubatorUnlimited';
+      }
+      out += '<div class="col s12 m4 l3 center" style="float: left;"><img src="image/items/' + img + '.png" class="png_img"><br>';
+      out += eggString;
+    }
     out += '</div></div>';
     var nth = 0;
     out = out.replace(/<\/div><div/g, function (match, i, original) {
       nth++;
       return (nth % 4 === 0) ? '</div></div><div class="row"><div' : match;
     });
+
     $('#subcontent').html(out);
     $('#subcontent .tooltipped').tooltip();
   },
@@ -610,6 +644,15 @@ var mapView = {
     $('#subcontent').html(out);
     $('#subcontent .tooltipped').tooltip();
   },
+  getGymLevel: function(gymPoints) {
+    var level = 1;
+    for (var t_level in self.min_gp_per_level) {
+      if (self.min_gp_per_level[t_level] < gymPoints) {
+        var level = t_level;
+      }
+    }
+    return level;
+  },
   trainerFunc: function(data, username) {
     var self = mapView,
       coords = self.pathcoords[username][self.pathcoords[username].length - 1];
@@ -643,17 +686,18 @@ var mapView = {
                 }
               });
             }
-            var fortPoints = '',
-              fortTeam = '',
-              fortType = 'PokeStop',
-              pokemonGuard = '';
-            if (fort.guard_pokemon_id != undefined) {
-              fortPoints = '<b>Points:</b> ' + fort.gym_points;
-              fortTeam = '<b>Team:</b> ' + self.teams[fort.owned_by_team] + '<br>';
-              fortType = 'Gym';
-              pokemonGuard = '<b>Guard Pokemon:</b> ' + (Pokemon.getPokemonById(fort.guard_pokemon_id).Name || "None") + '<br>';
+            var fortType = '<b>Type:</b> PokeStop',
+              contentString = '<b>ID:</b> ' + fort.id;
+            if (fort.type == 1) {
+              contentString += '<br>' + fortType; 
+            } else {
+              var fortType = '<b>Type:</b> Gym',
+                fortTeam = '<b>Team:</b> ' + self.teams[fort.owned_by_team],
+                fortGuardPokemon = '<b>Guard Pokemon:</b> ' + (Pokemon.getPokemonById(fort.guard_pokemon_id).Name || "None"),
+                fortPoints = '<b>Points:</b> ' + fort.gym_points,
+                fortLevel = '<b>Gym Level:</b> ' + self.getGymLevel(fort.gym_points);
+              contentString += '<br>' + fortType + '<br>' + fortTeam + '<br>' + fortGuardPokemon + '<br>' + fortPoints + '<br>' + fortLevel;
             }
-            var contentString = '<b>ID:</b> ' + fort.id + '<br><b>Type:</b> ' + fortType + '<br>' + pokemonGuard + fortPoints;
             self.info_windows[fort.id] = new google.maps.InfoWindow({
               content: contentString
             });
@@ -688,7 +732,7 @@ var mapView = {
       self.buildTrainerList();
       self.addInventory();
       logger.log({
-        message: "Trainer loaded: " + username,
+        message: "Trainer loaded: " + self.settings.users[username].displayName,
         color: "blue"
       });
       self.user_data[username].marker = new google.maps.Marker({

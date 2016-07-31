@@ -4,7 +4,8 @@ class Player {
     this.bagCandy = undefined;
     this.bagItems = undefined;
     this.bagPokemon = undefined;
-    this.eggs = 0;
+    this.eggs = undefined;
+    this.incubators = undefined;
     this.pokedex = undefined;
     this.stats = undefined;
     this.trainerPath = undefined;
@@ -25,6 +26,7 @@ class Player {
     this.bagItems = filterInventory(data, 'item');
     this.pokedex = new Pokedex(filterInventory(data, 'pokedex_entry'), username);
     this.stats = filterInventory(data, 'player_stats')[0].inventory_item_data.player_stats;
+    this.incubators = filterInventory(data, 'egg_incubators');
     this.updatePokemon(filterInventory(data, 'pokemon_data'), username);
   } 
 
@@ -33,7 +35,7 @@ class Player {
     this.bagPokemon = [];
     for (var i = 0; i < data.length; i++) {
       var pokeData = data[i].inventory_item_data.pokemon_data;
-      if (pokeData.is_egg) {
+      if (pokeData.is_egg == true) {
         // TODO: show the pokemon inside eggs
         this.eggs++;
         continue;
