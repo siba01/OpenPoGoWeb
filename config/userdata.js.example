@@ -3,40 +3,54 @@
 var userInfo = {
     users: {
         /*
-         * 'colors > path' will be used to color the bot's path in the map (mandatory)
+         * 'colors > botPath' will be used to color the bot's path in the map (mandatory)
          * 'colors > primary' will be used as the primary color for buttons in the bot menu and experience bar in the trainer info submenu (mandatory)
          * 'colors > secondary' will be used as the secondary color for buttons in the bot menu and experience bar in the trainer info submenu (mandatory)
-         * 'icon' is the path to the trainer icon which will be used as the bot's marker in the map (mandatory)
-         * 'focus' will define whether the bot should be focused in the first load (optional, this will only be used when there are more than 1 user)
+         * 'icon > path' is the path to the trainer icon which will be used as the bot's marker in the map (mandatory)
+         * 'icon > width' is the desired width of the trainer icon, if not defined or the value is lower than 0, the original size will be used (optional)
+         * 'icon > height' is the desired height of the trainer icon, if not defined or the value is lower than 0, the original size will be used (optional)
+         * 'focus' will define whether the bot should be focused in the first load, this will only be used when there are more than 1 user (optional)
          */
 
         "YOUR_USERNAME": {
             displayName: "YOUR_DISPLAYNAME",
             colors: {
-                path: "#2471a3",
+                botPath: "#2471a3",
                 primary: "#2471a3",
                 secondary: "#a9cce3"
             },
-            icon: "image/trainer/pokeball.png",
+            icon: {
+                path: "image/trainer/pokeball.png",
+                width: 36,
+                height: 36
+            },
             focus: true
         },
         /*"YOUR_OTHER_USERNAME": {
             displayName: "YOUR_OTHER_DISPLAYNAME",
             colors: {
-                path: "#a93226",
+                botPath: "#a93226",
                 primary: "#a93226",
                 secondary: "#e6b0aa"
             },
-            icon: "image/trainer/m46.png"
+            icon: {
+                path: "image/trainer/m46.png",
+                width: -1,
+                height: -1
+            }
         },
         "YOUR_OTHER_USERNAME": {
             displayName: "YOUR_OTHER_DISPLAYNAME",
             colors: {
-                path: "#884eA0",
+                botPath: "#884eA0",
                 primary: "#884eA0",
                 secondary: "#d7bde2"
             },
-            icon: "image/trainer/f87.png"
+            icon: {
+                path: "image/trainer/f87.png",
+                width: -1,
+                height: -1
+            }
         },*/
     },
 	userZoom: true,

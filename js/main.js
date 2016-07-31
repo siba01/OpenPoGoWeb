@@ -439,7 +439,7 @@ var mapView = {
             },
             icon: {
               url: 'image/pokemon/' + Pokemon.getImageById(data.pokemon_id),
-              scaledSize: new google.maps.Size(70, 70)
+              scaledSize: new google.maps.Size(45, 45)
             },
             zIndex: 3,
             //optimized: false, // need to figure out what this does - one thing that I know, zIndex gets ignored when this param exists
@@ -694,7 +694,7 @@ var mapView = {
                 zIndex: 2,
                 icon: {
                   url: 'image/forts/' + self.teams[(fort.owned_by_team || 0)] + '.png',
-                  scaledSize: new google.maps.Size(30, 30)
+                  scaledSize: new google.maps.Size(25, 25)
                 }
               });
             }
@@ -747,13 +747,18 @@ var mapView = {
         message: "Trainer loaded: " + self.settings.users[username].displayName,
         color: "blue"
       });
+      var iconSet = { url: self.settings.users[username].icon.path };
+      if ((self.settings.users[username].icon.width != undefined) && (self.settings.users[username].icon.height != undefined) &&
+          (self.settings.users[username].icon.width > -1) && (self.settings.users[username].icon.height > -1)) {
+        iconSet.scaledSize = new google.maps.Size(self.settings.users[username].icon.width, self.settings.users[username].icon.height);
+      }
       self.user_data[username].marker = new google.maps.Marker({
         map: self.map,
         position: {
           lat: parseFloat(data.lat),
           lng: parseFloat(data.lng)
         },
-        icon: self.settings.users[username].icon,
+        icon: iconSet,
         zIndex: 5,
         //label: username,
         clickable: true
@@ -778,7 +783,7 @@ var mapView = {
           map: self.map,
           path: self.pathcoords[username],
           geodisc: true,
-          strokeColor: self.settings.users[username].colors.path,
+          strokeColor: self.settings.users[username].colors.botPath,
           strokeOpacity: 0.0,
           strokeWeight: 2
         });
