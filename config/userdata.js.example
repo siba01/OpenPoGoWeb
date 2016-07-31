@@ -1,4 +1,4 @@
-// MUST CONFIGURE THE USER ARRAY AND GOOGLE MAPS API KEY.
+// MUST CONFIGURE THE USERS ARRAY AND GOOGLE MAPS API KEY.
 // YOU CAN GET A KEY HERE: https://developers.google.com/maps/documentation/javascript/get-api-key
 var userInfo = {
     users: {
