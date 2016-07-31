@@ -639,27 +639,23 @@ var mapView = {
       '</div>';
     }
 
-    // Add number of eggs
-    out += '<div class="col s12 m4 l3 center" style="float: left;"><img src="image/items/Egg.png" class="png_img"><br><b>You have ' + user.eggs + ' egg' + (user.eggs !== 1 ? "s" : "") + '</div>';
-    for (var i = 0; i < user.incubators.length; i++) {
-      var incubator = user.incubators[i].inventory_item_data.egg_incubators.egg_incubator;
-      if (!incubator.item_id) {
-        var incubator = user.incubators[i].inventory_item_data.egg_incubators.egg_incubator[0];
+    // Display eggs and incubators
+    out += '<div class="col s12 m4 l3 center"><img src="image/items/Egg.png" class="png_img"><br><b>You have ' + user.eggs + ' egg' + (user.eggs !== 1 ? "s" : "") + '</b></div>';
+    console.log(user.incubators);
+    if (Object.keys(user.incubators)) {
+      var incubators = user.incubators[0].inventory_item_data.egg_incubators.egg_incubator;
+      for (var i = 0; i < incubators.length; i++) {
+        console.log(incubators[i]);
+        var totalToWalk  = incubators[i].target_km_walked - incubators[i].start_km_walked,
+          kmsLeft = incubators[i].target_km_walked - self.user_data[user_id].stats.km_walked,
+          walked = totalToWalk - kmsLeft,
+          img = (incubators[i].item_id == 902 ? 'EggIncubator' : 'EggIncubatorUnlimited'),
+          eggString = '<b>' + (parseFloat(walked).toFixed(1) || 0) + " / " + (parseFloat(totalToWalk).toFixed(1) || 0) + "km</b>" +
+            (incubators[i].item_id == 902 ? '<br><b>Uses Left:</b> ' + incubators[i].uses_remaining : '');
+
+        out += '<div class="col s12 m4 l3 center"><img src="image/items/' + img + '.png" class="png_img"><br>' + eggString + '</div>';
       }
-      var current_user_stats = self.user_data[user_id].stats;
-      var totalToWalk  = incubator.target_km_walked - incubator.start_km_walked;
-      var kmsLeft = incubator.target_km_walked - current_user_stats.km_walked;
-      var walked = totalToWalk - kmsLeft;
-      var eggString = (parseFloat(walked).toFixed(1) || 0) + " / " + (parseFloat(totalToWalk).toFixed(1) || 0) + "km";
-      if (incubator.item_id == 902) {
-        var img = 'EggIncubator';
-      } else {
-        var img = 'EggIncubatorUnlimited';
-      }
-      out += '<div class="col s12 m4 l3 center" style="float: left;"><img src="image/items/' + img + '.png" class="png_img"><br>';
-      out += eggString;
     }
-    out += '</div></div>';
     var nth = 0;
     out = out.replace(/<\/div><div/g, function (match, i, original) {
       nth++;
@@ -948,13 +944,15 @@ var mapView = {
     self.customPathsLine.setMap(self.map);
   },
   generatePathFile: function() {
-    var self = mapView;
+    var self = mapView,
+      i = Object.keys(self.customPaths).length;
 
-    if (!Object.keys(self.customPaths).length) { return; } // if customPaths array is empty
+    if (!i) { return; } // if customPaths array is empty
 
     var fileContent = '[';
     for (var p in self.customPaths) {
       fileContent += '\n\t{"location": "' + self.customPaths[p].marker.getPosition().lat() + ', ' + self.customPaths[p].marker.getPosition().lng() + '"}';
+      if (p < (i - 1)) { fileContent += ','; }
     }
     fileContent += '\n]';
 
