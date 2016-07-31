@@ -390,11 +390,12 @@ html, body {
 	cursor: default;
 }
 
-.gym-info {
+.gym-title, .gym-desc {
 	display: block;
 	text-align: center;
-	font-weight: bold;
 }
+
+.gym-title { font-weight: bold; }
 
 .gym-image {
     width: 250px;

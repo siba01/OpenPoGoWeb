@@ -709,11 +709,14 @@ var mapView = {
       gym_details = fort.gym_details;
 
     if (!gym_details.gym_state) { return; } // failsafe
+
+    console.log(fort);
     
     var gym_memberships = gym_details.gym_state.memberships;
 
-    out += '<span class="gym-info">' + gym_details.name + '</span>' +
+    out += '<span class="gym-title">' + gym_details.name + '</span>' +
       '<div class="gym-image" style="background-image: url(\'' + gym_details.urls[0] + '\')"></div>' +
+      (gym_details.description ? '<span class="gym-desc">' + gym_details.description + '</span>' : '') +
       '<div class="gym-info-separator"></div>';
 
     if (fort.owned_by_team && gym_memberships && gym_memberships.length) {
