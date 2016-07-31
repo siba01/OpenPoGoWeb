@@ -468,7 +468,7 @@ var mapView = {
       }
     } else {
       // very unlikely to be triggered with PokemonGoF as it doesn't seem to clear catchable file after successfully capturing the Pokemon
-      if (Object.keys(user.catchable).length > 0) {
+      if (user.catchables !== undefined && Object.keys(user.catchable).length > 0) {
         logger.log({
           message: "[" + self.settings.users[username].displayName + "] " + user.catchable.name + " has been caught or fled"
         });
