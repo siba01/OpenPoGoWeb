@@ -1,62 +1,62 @@
 // MUST CONFIGURE THE USERS ARRAY AND GOOGLE MAPS API KEY.
 // YOU CAN GET A KEY HERE: https://developers.google.com/maps/documentation/javascript/get-api-key
 var userInfo = {
-    users: {
-        /*
-         * 'colors > botPath' will be used to color the bot's path in the map (mandatory)
-         * 'colors > primary' will be used as the primary color for buttons in the bot menu and experience bar in the trainer info submenu (mandatory)
-         * 'colors > secondary' will be used as the secondary color for buttons in the bot menu and experience bar in the trainer info submenu (mandatory)
-         * 'icon > path' is the path to the trainer icon which will be used as the bot's marker in the map (mandatory)
-         * 'icon > width' is the desired width of the trainer icon, if not defined or the value is lower than 0, the original size will be used (optional)
-         * 'icon > height' is the desired height of the trainer icon, if not defined or the value is lower than 0, the original size will be used (optional)
-         * 'focus' will define whether the bot should be focused in the first load, this will only be used when there are more than 1 user (optional)
-         */
+	users: {
+		/*
+		 * 'colors > botPath' will be used to color the bot's path in the map (mandatory)
+		 * 'colors > primary' will be used as the primary color for buttons in the bot menu and experience bar in the trainer info submenu (mandatory)
+		 * 'colors > secondary' will be used as the secondary color for buttons in the bot menu and experience bar in the trainer info submenu (mandatory)
+		 * 'icon > path' is the path to the trainer icon which will be used as the bot's marker in the map (mandatory)
+		 * 'icon > width' is the desired width of the trainer icon, if not defined or the value is lower than 0, the original size will be used (optional)
+		 * 'icon > height' is the desired height of the trainer icon, if not defined or the value is lower than 0, the original size will be used (optional)
+		 * 'focus' will define whether the bot should be focused in the first load, this will only be used when there are more than 1 user (optional)
+		 */
 
-        "YOUR_USERNAME": {
-            displayName: "YOUR_DISPLAYNAME",
-            colors: {
-                botPath: "#2471a3",
-                primary: "#2471a3",
-                secondary: "#a9cce3"
-            },
-            icon: {
-                path: "image/trainer/pokeball.png",
-                width: 36,
-                height: 36
-            },
-            focus: true
-        },
-        /*"YOUR_OTHER_USERNAME": {
-            displayName: "YOUR_OTHER_DISPLAYNAME",
-            colors: {
-                botPath: "#a93226",
-                primary: "#a93226",
-                secondary: "#e6b0aa"
-            },
-            icon: {
-                path: "image/trainer/m46.png",
-                width: -1,
-                height: -1
-            }
-        },
-        "YOUR_OTHER_USERNAME": {
-            displayName: "YOUR_OTHER_DISPLAYNAME",
-            colors: {
-                botPath: "#884eA0",
-                primary: "#884eA0",
-                secondary: "#d7bde2"
-            },
-            icon: {
-                path: "image/trainer/f87.png",
-                width: -1,
-                height: -1
-            }
-        },*/
-    },
+		"YOUR_USERNAME": {
+			displayName: "YOUR_DISPLAYNAME",
+			colors: {
+				botPath: "#2471a3",
+				primary: "#2471a3",
+				secondary: "#a9cce3"
+			},
+			icon: {
+				path: "image/trainer/pokeball.png",
+				width: 36,
+				height: 36
+			},
+			focus: true
+		},
+		/*"YOUR_OTHER_USERNAME": {
+			displayName: "YOUR_OTHER_DISPLAYNAME",
+			colors: {
+				botPath: "#a93226",
+				primary: "#a93226",
+				secondary: "#e6b0aa"
+			},
+			icon: {
+				path: "image/trainer/m46.png",
+				width: -1,
+				height: -1
+			}
+		},
+		"YOUR_OTHER_USERNAME": {
+			displayName: "YOUR_OTHER_DISPLAYNAME",
+			colors: {
+				botPath: "#884eA0",
+				primary: "#884eA0",
+				secondary: "#d7bde2"
+			},
+			icon: {
+				path: "image/trainer/f87.png",
+				width: -1,
+				height: -1
+			}
+		},*/
+	},
 	userZoom: true,
 	zoom: 16,
 	userFollow: true,
-    botPath: true,
-    defaultMapStyle: "pokemongo",
+	botPath: true,
+	defaultMapStyle: "pokemongo",
 	gMapsAPIKey: "YOUR_API_KEY_HERE"
 };

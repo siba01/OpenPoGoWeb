@@ -274,11 +274,11 @@ html, body {
 }
 
 	.bot-exp-bar span {
-	    position: relative;
-	    color: white;
-	    font-weight: bold;
-	    text-shadow: 0px 0px 1px #000;
-	    top: 1px;
+		position: relative;
+		color: white;
+		font-weight: bold;
+		text-shadow: 0px 0px 1px #000;
+		top: 1px;
 	}
 
 .container .row {
@@ -288,9 +288,9 @@ html, body {
 
 .row .col.l3 {
 	padding-top: 0.75rem;
-    padding-bottom: 0.75rem;
-    transition: background-color .2s;
-    border-radius: 2px;
+	padding-bottom: 0.75rem;
+	transition: background-color .2s;
+	border-radius: 2px;
 }
 
 	.row .col.l3:hover { background-color: #F7F7F7; }
@@ -308,23 +308,23 @@ html, body {
 
 	#sortButtons .chip a {
 		display: inline-block;
-	    height: 32px;
-	    font-size: 13px;
-	    font-weight: 500;
-	    line-height: 32px;
-	    padding: 0 12px;
-	    border-radius: 16px;
-	    background-color: #e4e4e4;
-	    margin-right: 5px;
-	    margin-top: 5px;
+		height: 32px;
+		font-size: 13px;
+		font-weight: 500;
+		line-height: 32px;
+		padding: 0 12px;
+		border-radius: 16px;
+		background-color: #e4e4e4;
+		margin-right: 5px;
+		margin-top: 5px;
 	}
 
 .pkmn-info-container > span { display: block; }
 
 .pkmn-info-cp > span {
 	font-size: 1.5em;
-    display: inline-block;
-    margin-left: 3px;
+	display: inline-block;
+	margin-left: 3px;
 }
 
 .pkmn-info-name { font-weight: bold; }
@@ -333,16 +333,16 @@ html, body {
 
 	.pkmn-info-img-container > .pkmn-info-img-glow {
 		position: absolute;
-	    top: 50%;
-	    left: 50%;
-	    width: 40px;
-	    height: 40px;
-	    display: block;
-	    margin-left: -20px;
-	    margin-top: -20px;
-	    background-color: rgba(3,155,229,0.1);
-	    border-radius: 100%;
-	    box-shadow: 0px 0px 30px 30px rgba(3,155,229,0.1);
+		top: 50%;
+		left: 50%;
+		width: 40px;
+		height: 40px;
+		display: block;
+		margin-left: -20px;
+		margin-top: -20px;
+		background-color: rgba(3,155,229,0.1);
+		border-radius: 100%;
+		box-shadow: 0px 0px 30px 30px rgba(3,155,229,0.1);
 	}
 
 	.pkmn-info-img-container > .pkmn-info-img {
@@ -360,9 +360,9 @@ html, body {
 
 	.pkmn-info-hp-bar > span {
 		position: relative;
-	    color: white;
-	    text-shadow: 0px 0px 1px #000;
-	    top: 1px;
+		color: white;
+		text-shadow: 0px 0px 1px #000;
+		top: 1px;
 	}
 
 .pkmn-info-iv > .solid { color: #4CAF50; }
@@ -375,11 +375,11 @@ html, body {
 
 	.pkmn-info-candy > span > img {
 		height: 17px;
-	    width: 17px;
-	    position: relative;
-	    display: inline-block;
-	    top: 2px;
-	    margin-left: 5px;
+		width: 17px;
+		position: relative;
+		display: inline-block;
+		top: 2px;
+		margin-left: 5px;
 	}
 
 .pkmn-info-capture-time {
