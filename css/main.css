@@ -257,6 +257,8 @@ html, body {
 
 /** EXTRA **/
 
+#optionsList > li:last-child { margin-top: 15px; } /* small spacing between Logs button and Map Style button */
+
 #menu { width: 200px; }
 
 #subcontent { margin-top: 20px; }

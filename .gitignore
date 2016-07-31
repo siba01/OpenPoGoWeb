@@ -21,3 +21,6 @@ userdata.js
 catchable-*.json
 inventory-*.json
 location-*.json
+
+# Dev libs
+libs/

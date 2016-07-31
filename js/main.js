@@ -41,15 +41,32 @@ function loadJSON(path, extra) {
   });
 }
 
+// Array of map styles (thanks to https://github.com/AHAAAAAAA/PokemonGo-Map)
+var mStyles = {
+    "nolabels": { name: "No Labels", style: [{featureType:"poi",elementType:"labels",stylers:[{visibility:"off"}]},{featureType:"all",elementType:"labels.icon",stylers:[{visibility:"off"}]}] },
+    "light2": { name: "Light2", style: [{elementType:"geometry",stylers:[{hue:"#ff4400"},{saturation:-68},{lightness:-4},{gamma:.72}]},{featureType:"road",elementType:"labels.icon"},{featureType:"landscape.man_made",elementType:"geometry",stylers:[{hue:"#0077ff"},{gamma:3.1}]},{featureType:"water",stylers:[{hue:"#00ccff"},{gamma:.44},{saturation:-33}]},{featureType:"poi.park",stylers:[{hue:"#44ff00"},{saturation:-23}]},{featureType:"water",elementType:"labels.text.fill",stylers:[{hue:"#007fff"},{gamma:.77},{saturation:65},{lightness:99}]},{featureType:"water",elementType:"labels.text.stroke",stylers:[{gamma:.11},{weight:5.6},{saturation:99},{hue:"#0091ff"},{lightness:-86}]},{featureType:"transit.line",elementType:"geometry",stylers:[{lightness:-48},{hue:"#ff5e00"},{gamma:1.2},{saturation:-23}]},{featureType:"transit",elementType:"labels.text.stroke",stylers:[{saturation:-64},{hue:"#ff9100"},{lightness:16},{gamma:.47},{weight:2.7}]}] },
+    "dark": { name: "Dark", style: [{featureType:"all",elementType:"labels.text.fill",stylers:[{saturation:36},{color:"#b39964"},{lightness:40}]},{featureType:"all",elementType:"labels.text.stroke",stylers:[{visibility:"on"},{color:"#000000"},{lightness:16}]},{featureType:"all",elementType:"labels.icon",stylers:[{visibility:"off"}]},{featureType:"administrative",elementType:"geometry.fill",stylers:[{color:"#000000"},{lightness:20}]},{featureType:"administrative",elementType:"geometry.stroke",stylers:[{color:"#000000"},{lightness:17},{weight:1.2}]},{featureType:"landscape",elementType:"geometry",stylers:[{color:"#000000"},{lightness:20}]},{featureType:"poi",elementType:"geometry",stylers:[{color:"#000000"},{lightness:21}]},{featureType:"road.highway",elementType:"geometry.fill",stylers:[{color:"#000000"},{lightness:17}]},{featureType:"road.highway",elementType:"geometry.stroke",stylers:[{color:"#000000"},{lightness:29},{weight:.2}]},{featureType:"road.arterial",elementType:"geometry",stylers:[{color:"#000000"},{lightness:18}]},{featureType:"road.local",elementType:"geometry",stylers:[{color:"#181818"},{lightness:16}]},{featureType:"transit",elementType:"geometry",stylers:[{color:"#000000"},{lightness:19}]},{featureType:"water",elementType:"geometry",stylers:[{lightness:17},{color:"#525252"}]}] },
+    "pokemongo": { name: "Pokemon Go", style: [{featureType:"landscape.man_made",elementType:"geometry.fill",stylers:[{color:"#a1f199"}]},{featureType:"landscape.natural.landcover",elementType:"geometry.fill",stylers:[{color:"#37bda2"}]},{featureType:"landscape.natural.terrain",elementType:"geometry.fill",stylers:[{color:"#37bda2"}]},{featureType:"poi.attraction",elementType:"geometry.fill",stylers:[{visibility:"on"}]},{featureType:"poi.business",elementType:"geometry.fill",stylers:[{color:"#e4dfd9"}]},{featureType:"poi.business",elementType:"labels.icon",stylers:[{visibility:"off"}]},{featureType:"poi.park",elementType:"geometry.fill",stylers:[{color:"#37bda2"}]},{featureType:"road",elementType:"geometry.fill",stylers:[{color:"#84b09e"}]},{featureType:"road",elementType:"geometry.stroke",stylers:[{color:"#fafeb8"},{weight:"1.25"}]},{featureType:"road.highway",elementType:"labels.icon",stylers:[{visibility:"off"}]},{featureType:"water",elementType:"geometry.fill",stylers:[{color:"#5ddad6"}]}] },
+    "light2_nolabels": { name: "Light2 (No Labels)", style: [{elementType:"geometry",stylers:[{hue:"#ff4400"},{saturation:-68},{lightness:-4},{gamma:.72}]},{featureType:"road",elementType:"labels.icon"},{featureType:"landscape.man_made",elementType:"geometry",stylers:[{hue:"#0077ff"},{gamma:3.1}]},{featureType:"water",stylers:[{hue:"#00ccff"},{gamma:.44},{saturation:-33}]},{featureType:"poi.park",stylers:[{hue:"#44ff00"},{saturation:-23}]},{featureType:"water",elementType:"labels.text.fill",stylers:[{hue:"#007fff"},{gamma:.77},{saturation:65},{lightness:99}]},{featureType:"water",elementType:"labels.text.stroke",stylers:[{gamma:.11},{weight:5.6},{saturation:99},{hue:"#0091ff"},{lightness:-86}]},{featureType:"transit.line",elementType:"geometry",stylers:[{lightness:-48},{hue:"#ff5e00"},{gamma:1.2},{saturation:-23}]},{featureType:"transit",elementType:"labels.text.stroke",stylers:[{saturation:-64},{hue:"#ff9100"},{lightness:16},{gamma:.47},{weight:2.7}]},{featureType:"all",elementType:"labels.text.stroke",stylers:[{visibility:"off"}]},{featureType:"all",elementType:"labels.text.fill",stylers:[{visibility:"off"}]},{featureType:"all",elementType:"labels.icon",stylers:[{visibility:"off"}]}] },
+    "dark_nolabels": { name: "Dark (No Labels)", style: [{featureType:"all",elementType:"labels.text.fill",stylers:[{visibility:"off"}]},{featureType:"all",elementType:"labels.text.stroke",stylers:[{visibility:"off"}]},{featureType:"all",elementType:"labels.icon",stylers:[{visibility:"off"}]},{featureType:"administrative",elementType:"geometry.fill",stylers:[{color:"#000000"},{lightness:20}]},{featureType:"administrative",elementType:"geometry.stroke",stylers:[{color:"#000000"},{lightness:17},{weight:1.2}]},{featureType:"landscape",elementType:"geometry",stylers:[{color:"#000000"},{lightness:20}]},{featureType:"poi",elementType:"geometry",stylers:[{color:"#000000"},{lightness:21}]},{featureType:"road.highway",elementType:"geometry.fill",stylers:[{color:"#000000"},{lightness:17}]},{featureType:"road.highway",elementType:"geometry.stroke",stylers:[{color:"#000000"},{lightness:29},{weight:.2}]},{featureType:"road.arterial",elementType:"geometry",stylers:[{color:"#000000"},{lightness:18}]},{featureType:"road.local",elementType:"geometry",stylers:[{color:"#181818"},{lightness:16}]},{featureType:"transit",elementType:"geometry",stylers:[{color:"#000000"},{lightness:19}]},{featureType:"water",elementType:"geometry",stylers:[{lightness:17},{color:"#525252"}]}] },
+    "pokemongo_nolabels": { name: "Pokemon Go (No Labels)", style: [{featureType:"landscape.man_made",elementType:"geometry.fill",stylers:[{color:"#a1f199"}]},{featureType:"landscape.natural.landcover",elementType:"geometry.fill",stylers:[{color:"#37bda2"}]},{featureType:"landscape.natural.terrain",elementType:"geometry.fill",stylers:[{color:"#37bda2"}]},{featureType:"poi.attraction",elementType:"geometry.fill",stylers:[{visibility:"on"}]},{featureType:"poi.business",elementType:"geometry.fill",stylers:[{color:"#e4dfd9"}]},{featureType:"poi.business",elementType:"labels.icon",stylers:[{visibility:"off"}]},{featureType:"poi.park",elementType:"geometry.fill",stylers:[{color:"#37bda2"}]},{featureType:"road",elementType:"geometry.fill",stylers:[{color:"#84b09e"}]},{featureType:"road",elementType:"geometry.stroke",stylers:[{color:"#fafeb8"},{weight:"1.25"}]},{featureType:"road.highway",elementType:"labels.icon",stylers:[{visibility:"off"}]},{featureType:"water",elementType:"geometry.fill",stylers:[{color:"#5ddad6"}]},{featureType:"all",elementType:"labels.text.stroke",stylers:[{visibility:"off"}]},{featureType:"all",elementType:"labels.text.fill",stylers:[{visibility:"off"}]},{featureType:"all",elementType:"labels.icon",stylers:[{visibility:"off"}]}] },
+    // https://github.com/OpenPoGo/OpenPoGoWeb/issues/122
+    "chrischi-": { name: "Chrischi-'s Pokemon Go (No Labels)", style: [{featureType:"road",elementType:"geometry.fill",stylers:[{color:"#4f9f92"},{visibility:"on"}]},{featureType:"water",elementType:"geometry.stroke",stylers:[{color:"#feff95"},{visibility:"on"},{weight:1.2}]},{featureType:"landscape",elementType:"geometry",stylers:[{color:"#adff9d"},{visibility:"on"}]},{featureType:"water",stylers:[{visibility:"on"},{color:"#147dd9"}]},{featureType:"poi",elementType:"geometry.fill",stylers:[{color:"#d3ffcc"}]},{elementType:"labels",stylers:[{visibility:"off"}]}] },
+  },
+  selectedStyle = undefined;
+
 // Array of required EXPs to level up for each level
-var exps_per_level = { 1: 1000, 2: 2000, 3: 3000, 4: 4000, 5: 5000, 6: 6000, 7: 7000, 8: 8000, 9: 9000, 10: 10000,
+var expsPerLevel = { 1: 1000, 2: 2000, 3: 3000, 4: 4000, 5: 5000, 6: 6000, 7: 7000, 8: 8000, 9: 9000, 10: 10000,
     11: 10000, 12: 10000, 13: 10000, 14: 15000, 15: 20000, 16: 20000, 17: 20000, 18: 25000, 19: 25000, 20: 50000,
     21: 75000, 22: 100000, 23: 125000, 24: 150000, 25: 190000, 26: 200000, 27: 250000, 28: 300000, 29: 350000, 30: 500000,
     31: 500000, 32: 750000, 33: 1000000, 34: 1250000, 35: 1500000, 36: 2000000, 37: 2500000, 38: 3000000, 39: 5000000, 40: 5000000
-  },
-  // Array of minimum gym points per level
-  min_gp_per_level = { 1: 0, 2: 2000, 3: 4000, 4: 8000, 5: 12000, 6: 16000, 7: 20000, 8: 30000, 9: 40000, 10: 50000 },
-  hasFocused = false;
+  };
+
+// Array of minimum gym points per level
+var minGPPerLevel = { 1: 0, 2: 2000, 3: 4000, 4: 8000, 5: 12000, 6: 16000, 7: 20000, 8: 30000, 9: 40000, 10: 50000 };
+
+// Indicator of whether the map has focused to the first bot (for 'focus' parameter in config)
+var hasFocused = false;
 
 var mapView = {
   user_index: 0,
@@ -186,22 +203,50 @@ var mapView = {
     });
 
   },
+  changeMapStyle: function(style) {
+    var self = mapView,
+      style = $(this).data('style');
+
+    if (!style) { return; }
+
+    if (mStyles[style] && mStyles[style].style) {
+      self.map.setOptions({
+        mapTypeId: 'roadmap',
+        styles: mStyles[style].style
+      });
+    } else {
+      self.map.setOptions({
+        mapTypeId: (style == 'satellite' ? 'satellite' : 'roadmap'),
+        styles: []
+      });
+    }
+
+    Cookies.set('mapStyle', style, { expires: 365 });
+  },
   initMap: function() {
     var self = this,
-      // https://github.com/OpenPoGo/OpenPoGoWeb/issues/122
-      style_PokemonGo = [ 
-        { "featureType": "road", "elementType": "geometry.fill", "stylers": [ { "color": "#4f9f92" }, { "visibility": "on" } ] },
-        { "featureType": "water", "elementType": "geometry.stroke", "stylers": [ { "color": "#feff95" }, { "visibility": "on" }, { "weight": 1.2 } ] },
-        { "featureType": "landscape", "elementType": "geometry", "stylers": [ { "color": "#adff9d" }, { "visibility": "on" } ] },
-        { "featureType": "water", "stylers": [ { "visibility": "on" }, { "color": "#147dd9" } ] },
-        { "featureType": "poi", "elementType": "geometry.fill", "stylers": [ { "color": "#d3ffcc" } ] },{ "elementType": "labels", "stylers": [ { "visibility": "off" } ] } 
-      ];
+      cookies = Cookies.get('mapStyle'),
+      desiredStyle = cookies || self.settings.defaultMapStyle || undefined;
     self.map = new google.maps.Map(document.getElementById('map'), {
       center: {lat: 50.0830986, lng: 6.7613762},
       zoom: 8,
-      mapTypeId: 'roadmap',
-      styles: (self.settings.usePokemonGoMapStyle ? style_PokemonGo : [])
+      mapTypeId: (desiredStyle && desiredStyle == 'satellite' ? 'satellite' : 'roadmap'),
+      styles: ((desiredStyle && desiredStyle != 'satellite' && mStyles[desiredStyle] && mStyles[desiredStyle].style) ? mStyles[desiredStyle].style : [])
     });
+
+    var ops = $('#mapStyles');
+    if (mStyles != undefined && Object.keys(mStyles).length && ops != undefined) {
+      ops.append('<li class="divider"></li>');
+      for (var s in mStyles) {
+        if (mStyles[s].name != undefined && mStyles[s].style != undefined) {
+          ops.append('<li><a data-style="' + s + '">' + mStyles[s].name + '</a></li><li class="divider"></li>');
+        }
+      }
+      ops.find('li.divider:last-child').remove(); // remove latest divider thingy
+      ops.find('li > a').click(self.changeMapStyle); // add click handler
+    }
+
+    if (cookies) { Cookies.set('mapStyle', cookies, { expires: 365 }); } // refresh cookies
 
     self.placeTrainer();
     self.addCatchable();
@@ -231,7 +276,7 @@ var mapView = {
   {
     var t, i;
     t = 0;
-    for (i = 1; i < level; i++) { t += exps_per_level[i]; }
+    for (i = 1; i < level; i++) { t += expsPerLevel[i]; }
     return t;
   },
   buildMenu: function(user_id, menu) {
@@ -245,7 +290,7 @@ var mapView = {
         $('#sortButtons').html('');
 
         var exp_for_current_level = current_user_stats.experience - self.calculateTotalPreviousExps(current_user_stats.level),
-          exp_to_level_percentage = exp_for_current_level / exps_per_level[current_user_stats.level] * 100;
+          exp_to_level_percentage = exp_for_current_level / expsPerLevel[current_user_stats.level] * 100;
 
         out += '<div class="row"><div class="col s12"><h5>' +
           self.settings.users[user_id].displayName +
@@ -266,9 +311,9 @@ var mapView = {
           ': ' +
           exp_for_current_level +
           ' / ' +
-          exps_per_level[current_user_stats.level] +
+          expsPerLevel[current_user_stats.level] +
           '<br>Remaining Experience: ' +
-          (exps_per_level[current_user_stats.level] - exp_for_current_level) +
+          (expsPerLevel[current_user_stats.level] - exp_for_current_level) +
           '<br>Pokemon Encountered: ' +
           (current_user_stats.pokemons_encountered || 0) +
           '<br>Pokeballs Thrown: ' +
@@ -658,8 +703,8 @@ var mapView = {
   },
   getGymLevel: function(gymPoints) {
     var level = 1;
-    for (var t_level in self.min_gp_per_level) {
-      if (self.min_gp_per_level[t_level] < gymPoints) {
+    for (var t_level in self.minGPPerLevel) {
+      if (self.minGPPerLevel[t_level] < gymPoints) {
         var level = t_level;
       }
     }
