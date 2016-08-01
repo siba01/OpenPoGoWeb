@@ -397,6 +397,12 @@ html, body {
 
 .gym-title { font-weight: bold; }
 
+.gym-desc {
+	max-height: 100px;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
 .gym-image {
     width: 250px;
     height: 250px;
