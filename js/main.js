@@ -26,11 +26,11 @@ function loadJSON(path, extra) {
         $.get({
             url: path + "?" + Date.now()
         }).done(function(data) {
-            if(data !== undefined) {
-                if (extra == undefined) {
-                    fulfill(data);
-                } else {
+            if (data !== undefined) {
+                if (extra != undefined) {
                     fulfill([data, extra]); // pass extra data if necessary - to solve out-of-sync username info
+                } else {
+                    fulfill(data);
                 }
             } else {
                 reject(data);
@@ -267,7 +267,7 @@ var mapView = {
     addInventory: function() {
         var self = mapView;
         for (var user in self.settings.users) {
-            var a = loadJSON('inventory-' + user + '.json', user).then(function(data) {
+            loadJSON('inventory-' + user + '.json', user).then(function(data) {
                 // data[0] contains the necessary data, data[1] contains the username
                 self.user_data[data[1]].updateInventory(data[0]);
             });
@@ -531,7 +531,7 @@ var mapView = {
 
         out = '<div class="items"><div class="row">';
 
-        var jsChkTime = moment().subtract(1, 'days');
+        var jsChkTime = moment().subtract(1, 'd');
         for (var i = 0; i < sortedPokemon.length; i++) {
             var myPokemon = sortedPokemon[i];
             var pkmnNum = myPokemon.id,
@@ -752,7 +752,8 @@ var mapView = {
     trainerFunc: function(data, username) {
         var self = mapView,
             coords = self.pathcoords[username][self.pathcoords[username].length - 1],
-            jsChkTime = moment();
+            jsChkTime = moment(),
+            jsChkTimeMin = moment(jsChkTime).subtract(15, 's');
         // Create the lone info_window which will be used to display PokeStop info if it doesn't exist
         if (!self.info_windows.fort) { self.info_windows.fort = new google.maps.InfoWindow(); }
         for (var i = 0; i < data.cells.length; i++) {
@@ -763,6 +764,9 @@ var mapView = {
                     if (self.forts[fort_id]) {
                         // Process only if the new data comes from the same origin
                         if (self.forts[fort_id].owner !== self.prioritize) { break; }
+
+                        // Process only if the last timestamp was at least 15 seconds (experimental)
+                        if (moment(jsChkTimeMin).isSameOrBefore(self.forts[fort_id].timestamp)) { break; }
 
                         // Update existing fort data as necessary
                         var fort_data = self.forts[fort_id].data;
@@ -796,10 +800,16 @@ var mapView = {
                                         scaledSize: new google.maps.Size(25, 25)
                                     }
                                 });
+                                logger.log({
+                                    message: (gym_name ? 'Gym: ' + gym_name : 'A faraway gym') +
+                                        (new_team != 0 ? ' is now owned by Team ' + self.teams[new_team] : ' was taken over from Team ' + self.teams[old_team])
+                                });
                             }
                         }
                         // Now update existing data with the new one
                         self.forts[fort_id].data = cell.forts[x];
+                        // Time mark (experimental)
+                        self.forts[fort_id].timestamp = jsChkTime;
                     } else {
                         // Create the fort if it didn't exist
                         self.forts[fort_id] = {
@@ -849,6 +859,8 @@ var mapView = {
                                 }
                             };
                         })(fort_id));
+                        // Time mark (experimental)
+                        self.forts[fort_id].timestamp = jsChkTime;
                     }
                 }
             }
@@ -889,8 +901,7 @@ var mapView = {
                     lng: parseFloat(data.lng)
                 },
                 icon: iconSet,
-                zIndex: 5,
-                //label: username,
+                zIndex: 5 + (Object.keys(self.user_data).length - Object.keys(self.user_data).indexOf(username) - 1),
                 clickable: true
             });
             var contentString = '<b>Trainer:</b> ' + username;
