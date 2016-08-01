@@ -395,7 +395,7 @@ var mapView = {
         var pkmnTotal = self.user_data[user_id].pokedex.getNumEntries();
         $('#subtitle').html('Pokedex ' + pkmnTotal + ' / 151');
 
-        var sortButtons = '<div class="col s12 pokedex-sort" dat-user-id="' + user_id + '">Sort : ';
+        var sortButtons = '<div class="col s12 pokedex-sort" data-user-id="' + user_id + '">Sort : ';
         sortButtons += '<div class="chip"><a href="#" data-sort="id">ID</a></div>';
         sortButtons += '<div class="chip"><a href="#" data-sort="name">Name</a></div>';
         sortButtons += '<div class="chip"><a href="#" data-sort="enc">Seen</a></div>';
@@ -701,74 +701,80 @@ var mapView = {
     return level;
   },
   buildGymInfo: function(fort) {
-    if (!fort || !Object.keys(fort).length || !fort.gym_details) { return; } // if fort is not defined or if it's an empty object or if gym_details is not present
+    console.log(fort);
+    if (!fort || !Object.keys(fort).length) { return; } // if fort is not defined or if it's an empty object or if gym_details is not present
 
     $("#submenu").show();
+    $("#sortButtons").hide();
 
     var self = this,
-      out = '',
-      gym_details = fort.gym_details;
+      out = '';
+    var gym_details = fort.gym_details,
+      gym_memberships = (gym_details.gym_state ? gym_details.gym_state.memberships : undefined);
 
-    if (!gym_details.gym_state) { return; } // failsafe
+    if (gym_details.name && gym_details.urls && gym_details.urls.length) {
+      out += '<span class="gym-title">' + gym_details.name + '</span>' +
+        '<div class="gym-image" style="background-image: url(\'' + gym_details.urls[0] + '\')"></div>' +
+        (gym_details.description ? '<span class="gym-desc">' + gym_details.description + '</span>' : '');
+    } else {
+      out += '<span class="gym-desc">Unable to receive more detailed information about this Gym.</span>';
+    }
 
-    console.log(fort);
-    
-    var gym_memberships = gym_details.gym_state.memberships;
+    out += '<div class="gym-info-separator"></div>';
 
-    out += '<span class="gym-title">' + gym_details.name + '</span>' +
-      '<div class="gym-image" style="background-image: url(\'' + gym_details.urls[0] + '\')"></div>' +
-      (gym_details.description ? '<span class="gym-desc">' + gym_details.description + '</span>' : '') +
-      '<div class="gym-info-separator"></div>';
-
-    if (fort.owned_by_team && gym_memberships && gym_memberships.length) {
+    if (fort.owned_by_team) {
       out += '<b>Team:</b> ' + self.teams[fort.owned_by_team] + '<br>' +
         '<b>Points:</b> ' + fort.gym_points + '<br>' +
-        '<b>Gym Level:</b> ' + self.getGymLevel(fort.gym_points)  +
-        '<div class="gym-info-separator"></div>' +
-        '<div class="row">';
-      for (var m = 0; m < gym_memberships.length; m++) {
-        var gymPokemon = new Pokemon(gym_memberships[m].pokemon_data);
-        var pkmnNum = gymPokemon.id,
-          pkmnImage = Pokemon.getImageById(gymPokemon.id),
-          pkmnName = Pokemon.getNameById(pkmnNum),
-          pkmnCP = gymPokemon.combatPower,
-          pkmnIV = gymPokemon.IV,
-          pkmnIVA = gymPokemon.attackIV,
-          pkmnIVD = gymPokemon.defenseIV,
-          pkmnIVS = gymPokemon.staminaIV,
-          pkmnHP = gymPokemon.health,
-          pkmnMHP = gymPokemon.maxHealth;
+        '<b>Gym Level:</b> ' + self.getGymLevel(fort.gym_points) +
+        '<div class="gym-info-separator"></div>';
+      if (gym_memberships && gym_memberships.length) {
+        out += '<div class="row">';
+        for (var m = 0; m < gym_memberships.length; m++) {
+          var gymPokemon = new Pokemon(gym_memberships[m].pokemon_data);
+          var pkmnNum = gymPokemon.id,
+            pkmnImage = Pokemon.getImageById(gymPokemon.id),
+            pkmnName = Pokemon.getNameById(pkmnNum),
+            pkmnCP = gymPokemon.combatPower,
+            pkmnIV = gymPokemon.IV,
+            pkmnIVA = gymPokemon.attackIV,
+            pkmnIVD = gymPokemon.defenseIV,
+            pkmnIVS = gymPokemon.staminaIV,
+            pkmnHP = gymPokemon.health,
+            pkmnMHP = gymPokemon.maxHealth;
 
-        out += '<div class="col s12 m6 l4 center pkmn-info-container">' + 
-          '<span class="pkmn-info-cp">CP<span>' + pkmnCP + '</span></span>' +
-          '<span class="pkmn-info-img-container">' +
-            '<img class="png_img pkmn-info-img" src="image/pokemon/' + pkmnImage + '">' +
-          '</span>' +
-          '<span class="pkmn-info-name">' +
-            pkmnName +
-          '</span>' + 
-          '<div class="pkmn-info-hp-bar pkmn-' + pkmnNum + ' progress">' +
-            '<div class="determinate pkmn-' + pkmnNum + '" style="width: ' + (pkmnHP / pkmnMHP) * 100 +'%"></div>' +
-            '<span>' + pkmnHP + ' / ' + pkmnMHP + '</span>' +
-          '</div>'+
-          '<span class="pkmn-info-iv">' +
-            '<b>IV:</b> ' +
-            '<span class="' + (pkmnIV == 1 ? 'perfect' : (pkmnIV >= 0.8 ? 'solid' : '')) + '">' +
-              pkmnIV +
+          out += '<div class="col s12 m6 l4 center pkmn-info-container">' + 
+            '<span class="pkmn-info-cp">CP<span>' + pkmnCP + '</span></span>' +
+            '<span class="pkmn-info-img-container">' +
+              '<img class="png_img pkmn-info-img" src="image/pokemon/' + pkmnImage + '">' +
             '</span>' +
-          '</span>' +
-          '<span>' +
-            '<b>A/D/S:</b> ' + pkmnIVA + '/' + pkmnIVD + '/' + pkmnIVS +
-          '</span>' +
-          '<span>' +
-            '<b>Trainer:</b> ' + gym_memberships[m].trainer_public_profile.name +
-          '</span>' +
-          '<span>' +
-            '<b>Trainer Level:</b> ' + gym_memberships[m].trainer_public_profile.level +
-          '</span>' +
-        '</div>';
+            '<span class="pkmn-info-name">' +
+              pkmnName +
+            '</span>' + 
+            '<div class="pkmn-info-hp-bar pkmn-' + pkmnNum + ' progress">' +
+              '<div class="determinate pkmn-' + pkmnNum + '" style="width: ' + (pkmnHP / pkmnMHP) * 100 +'%"></div>' +
+              '<span>' + pkmnHP + ' / ' + pkmnMHP + '</span>' +
+            '</div>'+
+            '<span class="pkmn-info-iv">' +
+              '<b>IV:</b> ' +
+              '<span class="' + (pkmnIV == 1 ? 'perfect' : (pkmnIV >= 0.8 ? 'solid' : '')) + '">' +
+                pkmnIV +
+              '</span>' +
+            '</span>' +
+            '<span>' +
+              '<b>A/D/S:</b> ' + pkmnIVA + '/' + pkmnIVD + '/' + pkmnIVS +
+            '</span>' +
+            '<span>' +
+              '<b>Trainer:</b> ' + gym_memberships[m].trainer_public_profile.name +
+            '</span>' +
+            '<span>' +
+              '<b>Trainer Level:</b> ' + gym_memberships[m].trainer_public_profile.level +
+            '</span>' +
+          '</div>';
+        }
+        out += '</div>';
+      } else if (fort.guard_pokemon_id != undefined) {
+        out += '<b>Guard Pokemon:</b> ' + Pokemon.getNameById(fort.guard_pokemon_id);
       }
-      out += '</div>';
     } else {
       out += 'This gym is not owned by any team.';
     }
