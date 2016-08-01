@@ -94,6 +94,13 @@ class Player {
                     return t;
                 });
                 break;
+            case 'hp':
+                sortedPokemon.sort(function(a, b) {
+                    var t = b.maxHealth - a.maxHealth;
+                    if (!t) { t = b.health - a.health; } // 2nd step: compare actual HP
+                    return t;
+                });
+                break;
             case 'attack':
                 sortedPokemon.sort(function(a, b) {
                     var t = b.attackIV - a.attackIV;

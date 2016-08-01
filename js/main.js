@@ -366,6 +366,7 @@ var mapView = {
                 sortButtons += '<div class="chip"><a href="#" data-sort="id">ID</a></div>';
                 sortButtons += '<div class="chip"><a href="#" data-sort="time">Time</a></div>';
                 sortButtons += '<div class="chip"><a href="#" data-sort="candy">Candy</a></div>';
+                sortButtons += '<div class="chip"><a href="#" data-sort="hp">HP</a></div>';
                 sortButtons += '<div class="chip"><a href="#" data-sort="attack">Attack</a></div>';
                 sortButtons += '<div class="chip"><a href="#" data-sort="defense">Defense</a></div>';
                 sortButtons += '<div class="chip"><a href="#" data-sort="stamina">Stamina</a></div>';
@@ -753,7 +754,7 @@ var mapView = {
         var self = mapView,
             coords = self.pathcoords[username][self.pathcoords[username].length - 1],
             jsChkTime = moment(),
-            jsChkTimeMin = moment(jsChkTime).subtract(15, 's');
+            jsChkTimeMin = moment(jsChkTime).subtract(30, 's');
         // Create the lone info_window which will be used to display PokeStop info if it doesn't exist
         if (!self.info_windows.fort) { self.info_windows.fort = new google.maps.InfoWindow(); }
         for (var i = 0; i < data.cells.length; i++) {
