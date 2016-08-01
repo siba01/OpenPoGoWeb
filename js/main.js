@@ -766,7 +766,7 @@ var mapView = {
                         if (self.forts[fort_id].owner !== self.prioritize) { break; }
 
                         // Process only if the last timestamp was at least 15 seconds (experimental)
-                        if (moment(jsChkTimeMin).isSameOrBefore(self.forts[fort_id].timestamp)) { break; }
+                        if (moment(jsChkTimeMin).isBefore(self.forts[fort_id].timestamp)) { break; }
 
                         // Update existing fort data as necessary
                         var fort_data = self.forts[fort_id].data;
