@@ -656,10 +656,13 @@ var mapView = {
         $('#subcontent .tooltipped').tooltip();
     },
     getGymLevel: function(gymPoints) {
-        var level = 1;
+        var self = this,
+            level = 1;
         for (var t_level in self.minimumGymPointsPerLevel) {
             if (self.minimumGymPointsPerLevel[t_level] < gymPoints) {
-                var level = t_level;
+                level = t_level;
+            } else {
+                break;
             }
         }
         return level;
@@ -759,7 +762,7 @@ var mapView = {
                     var fort_id = cell.forts[x].id;
                     if (self.forts[fort_id]) {
                         // Process only if the new data comes from the same origin
-                        if (self.forts[fort_id].owner != self.prioritize) { break; }
+                        if (self.forts[fort_id].owner !== self.prioritize) { break; }
 
                         // Update existing fort data as necessary
                         var fort_data = self.forts[fort_id].data;
