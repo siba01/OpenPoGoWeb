@@ -451,6 +451,8 @@ var mapView = {
     var self = mapView,
       user = self.user_data[username],
       poke_name = '';
+    // Create the lone info_window which will be used to display PokeStop info if it doesn't exist
+    if (!self.info_windows.pokemon) { self.info_windows.pokemon = new google.maps.InfoWindow(); }
     if (data !== undefined && Object.keys(data).length) {
       if (user.catchable == undefined) {
         user.catchable = {};
@@ -464,7 +466,6 @@ var mapView = {
             message: "[" + (self.settings.users[username].displayName ? self.settings.users[username].displayName : username) + "] " + user.catchable.name + " has been caught or fled"
           });
           user.catchable.marker.setMap(null);
-          user.catchable.infowindow.setMap(null);
           user.catchable = {};
         }
         // Process current Pokemon if last Pokemon didn't exist or was of different instance and current Pokemon hasn't expired
@@ -485,10 +486,9 @@ var mapView = {
               scaledSize: new google.maps.Size(45, 45)
             },
             zIndex: 3,
-            //optimized: false, // need to figure out what this does - one thing that I know, zIndex gets ignored when this param exists
             clickable: true
           });
-          var contentString = '<b>Spawn Point ID:</b> ' +
+          user.catchable.infowindow = '<b>Spawn Point ID:</b> ' +
             data.spawn_point_id +
             '<br><b>Encounter ID:</b> ' +
             data.encounter_id +
@@ -496,15 +496,12 @@ var mapView = {
             user.catchable.name +
             '<br><br>This Pokemon will expire at ' +
             moment(data.expiration_timestamp_ms).format('hh:mm:ss A');
-          user.catchable.infowindow = new google.maps.InfoWindow({
-            content: contentString
-          });
-          google.maps.event.addListener(user.catchable.marker, 'click', (function(content, infowindow) {
+          google.maps.event.addListener(user.catchable.marker, 'click', (function(username) {
             return function() {
-              infowindow.setContent(content);
-              infowindow.open(this.map, this);
+              self.info_windows.pokemon.setContent(self.user_data[username].catchable.infowindow);
+              self.info_windows.pokemon.open(this.map, this);
             };
-          })(contentString, user.catchable.infowindow));
+          })(username));
           user.catchable.encounter_id = data.encounter_id;
           user.catchable.expiration_timestamp_ms = data.expiration_timestamp_ms;
         }
@@ -516,7 +513,6 @@ var mapView = {
           message: "[" + (self.settings.users[username].displayName ? self.settings.users[username].displayName : username) + "] " + user.catchable.name + " has been caught or fled"
         });
         user.catchable.marker.setMap(null);
-        user.catchable.infowindow.setMap(null);
         user.catchable = undefined;
       }
     }
@@ -544,6 +540,8 @@ var mapView = {
         return (user.bagCandy[i].inventory_item_data.candy.candy || 0);
       }
     }
+
+    return '...'; // fallback for no data
   },
   placeTrainer: function() {
     var self = mapView;
@@ -616,7 +614,8 @@ var mapView = {
           (sortOn == 'stamina' ? '<span class="pkmn-info-sort-ads">' + pkmnIVS + '</span>' : pkmnIVS) +
         '</span>' +
         '<span class="pkmn-info-candy">' +
-          '<span class="tooltipped" data-position="right" data-delay="25" data-tooltip="' + pkmnCandy + ' Candies">' +
+          '<span class="tooltipped" data-position="right" data-delay="25" data-tooltip="' +
+          (pkmnCandy == '...' ? 'Could not retrieve candy data...' : pkmnCandy + ' Candies') + '">' +
             '<b>' + pkmnCandy + '</b>' +
             '<img src="image/items/Candy_new.png">' +
           '</span>' +
@@ -786,55 +785,101 @@ var mapView = {
   },
   trainerFunc: function(data, username) {
     var self = mapView,
-      coords = self.pathcoords[username][self.pathcoords[username].length - 1];
+      coords = self.pathcoords[username][self.pathcoords[username].length - 1],
+      jsChkTime = moment();
+    // Create the lone info_window which will be used to display PokeStop info if it doesn't exist
+    if (!self.info_windows.fort) { self.info_windows.fort = new google.maps.InfoWindow(); }
     for (var i = 0; i < data.cells.length; i++) {
       var cell = data.cells[i];
       if (data.cells[i].forts != undefined) {
         for (var x = 0; x < data.cells[i].forts.length; x++) {
-          var fort = cell.forts[x];
-          if (!self.forts[fort.id]) {
-            if (fort.type === 1) {
-              self.forts[fort.id] = new google.maps.Marker({
+          var fort_id = cell.forts[x].id;
+          if (self.forts[fort_id]) {
+            var fort_data = self.forts[fort_id].data;
+            // Update existing fort data as necessary
+            if (fort_data.type === 1) {
+              var old_lure_info = fort_data.hasOwnProperty('lure_info'),
+                new_lure_info = cell.forts[x].hasOwnProperty('lure_info'),
+                is_lured = 0, lure_timestamp = 0;
+              // Validate lure effect
+              if (new_lure_info) {
+                lure_timestamp = cell.forts[x].lure_info.lure_expires_timestamp_ms;
+                is_lured = (!jsChkTime.isSameOrAfter(lure_timestamp) ? 1 : 0);
+              }
+              // Change PokeStop icon if necessary
+              if (new_lure_info != old_lure_info) {
+                self.forts[fort_id].marker.setOptions({ icon: (is_lured ? 'image/forts/img_pokestop_lure.png' : 'image/forts/img_pokestop.png') });
+              }
+              // Update info window message (this will always be updated regardless of whether the lure status was different or not)
+              self.forts[fort_id].infowindow = '<b>ID:</b> ' + fort_data.id + '<br><b>Type:</b> PokeStop' +
+                (is_lured ? '<br><br>The lure effect in this PokeStop will expire at ' + moment(lure_timestamp).format('hh:mm:ss A') : '');
+            } else {
+              // Change Gym icon if necessary
+              var old_team = fort_data.owned_by_team || 0,
+                new_team = cell.forts[x].owned_by_team || 0,
+                gym_name = fort_data.gym_details.name;
+
+              if (new_team !== old_team) {
+                self.forts[fort_id].marker.setOptions({
+                  icon: {
+                    url: 'image/forts/' + self.teams[new_team] + '.png',
+                    scaledSize: new google.maps.Size(25, 25)
+                  }
+                });
+                logger.log({
+                  message: (gym_name ? 'Gym: ' + gym_name : 'A faraway gym') +
+                    (new_team != 0 ? ' is now owned by Team ' + self.teams[new_team] : ' was taken over from Team ' + self.teams[old_team])
+                });
+              }
+            }
+            // Now update existing data with the new one
+            self.forts[fort_id].data = cell.forts[x];
+          } else {
+            // Create the fort if it didn't exist
+            self.forts[fort_id] = { data: cell.forts[x] };
+            var fort_data = self.forts[fort_id].data;
+            if (fort_data.type === 1) {
+              var is_lured = 0, lure_timestamp = 0;
+              if (fort_data.hasOwnProperty('lure_info')) {
+                lure_timestamp = fort_data.lure_info.lure_expires_timestamp_ms;
+                is_lured = (!jsChkTime.isSameOrAfter(lure_timestamp) ? 1 : 0);
+              }
+              self.forts[fort_id].marker = new google.maps.Marker({
                 map: self.map,
                 position: {
-                  lat: parseFloat(fort.latitude),
-                  lng: parseFloat(fort.longitude)
+                  lat: parseFloat(fort_data.latitude),
+                  lng: parseFloat(fort_data.longitude)
                 },
                 zIndex: 1,
-                icon: (fort.hasOwnProperty('lure_info') ? 'image/forts/img_pokestop_lure.png' : 'image/forts/img_pokestop.png')
+                icon: (is_lured ? 'image/forts/img_pokestop_lure.png' : 'image/forts/img_pokestop.png')
               });
+              self.forts[fort_id].infowindow = '<b>ID:</b> ' + fort_data.id + '<br><b>Type:</b> PokeStop' +
+                (is_lured ? '<br><br>The lure effect in this PokeStop will expire at ' + moment(lure_timestamp).format('hh:mm:ss A') : '');
             } else {
-              self.forts[fort.id] = new google.maps.Marker({
+              self.forts[fort_id].marker = new google.maps.Marker({
                 map: self.map,
                 position: {
-                  lat: parseFloat(fort.latitude),
-                  lng: parseFloat(fort.longitude)
+                  lat: parseFloat(fort_data.latitude),
+                  lng: parseFloat(fort_data.longitude)
                 },
                 zIndex: 2,
                 icon: {
-                  url: 'image/forts/' + self.teams[(fort.owned_by_team || 0)] + '.png',
+                  url: 'image/forts/' + self.teams[(fort_data.owned_by_team || 0)] + '.png',
                   scaledSize: new google.maps.Size(25, 25)
                 }
               });
             }
-            if (fort.type == 1) {
-              var contentString = '<b>ID:</b> ' + fort.id + '<br><b>Type:</b> PokeStop';
-              self.info_windows[fort.id] = new google.maps.InfoWindow({
-                content: contentString
-              });
-            } else {
-              self.info_windows[fort.id] = 0;
-            }
-            google.maps.event.addListener(self.forts[fort.id], 'click', (function(content, infowindow, fort) {
+            // Only pass over the fort ID to the listener so that when the data changes we won't have to re-create the listener
+            google.maps.event.addListener(self.forts[fort_id].marker, 'click', (function(fort_id) {
               return function() {
-                if (infowindow) {
-                  infowindow.setContent(content);
-                  infowindow.open(this.map, this);
+                if (self.forts[fort_id].infowindow) {
+                  self.info_windows.fort.setContent(self.forts[fort_id].infowindow);
+                  self.info_windows.fort.open(this.map, this);
                 } else {
-                  self.buildGymInfo(fort);
+                  self.buildGymInfo(self.forts[fort_id].data);
                 }
               };
-            })(contentString, self.info_windows[fort.id], fort));
+            })(fort_id));
           }
         }
       }
