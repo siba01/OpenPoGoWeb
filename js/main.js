@@ -256,6 +256,11 @@ var mapView = {
 
     if (cookies) { Cookies.set('mapStyle', cookies, { expires: 365 }); } // refresh cookies
 
+    // Validate which user to prioritize in parsing location (this is for instances where multiple bots provide different data for the same location)
+    self.prioritize = undefined;
+    for (var p in self.settings.users) { if (self.settings.users[p].prioritizeLocationData) { self.prioritize = p; break; } }
+    if (!self.prioritize) { self.prioritize = Object.keys(self.settings.users)[0]; }
+
     self.placeTrainer();
     self.addCatchable();
     setInterval(self.placeTrainer, 1000);
@@ -795,8 +800,12 @@ var mapView = {
         for (var x = 0; x < data.cells[i].forts.length; x++) {
           var fort_id = cell.forts[x].id;
           if (self.forts[fort_id]) {
-            var fort_data = self.forts[fort_id].data;
+            // Process only if the new data comes from the same origin
+            if (self.forts[fort_id].owner != self.prioritize) { break; }
+
             // Update existing fort data as necessary
+            var fort_data = self.forts[fort_id].data;
+
             if (fort_data.type === 1) {
               var old_lure_info = fort_data.hasOwnProperty('lure_info'),
                 new_lure_info = cell.forts[x].hasOwnProperty('lure_info'),
@@ -836,7 +845,10 @@ var mapView = {
             self.forts[fort_id].data = cell.forts[x];
           } else {
             // Create the fort if it didn't exist
-            self.forts[fort_id] = { data: cell.forts[x] };
+            self.forts[fort_id] = {
+              data: cell.forts[x],
+              owner: username
+            };
             var fort_data = self.forts[fort_id].data;
             if (fort_data.type === 1) {
               var is_lured = 0, lure_timestamp = 0;
