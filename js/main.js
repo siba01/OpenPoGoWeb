@@ -701,7 +701,6 @@ var mapView = {
     return level;
   },
   buildGymInfo: function(fort) {
-    console.log(fort);
     if (!fort || !Object.keys(fort).length) { return; } // if fort is not defined or if it's an empty object or if gym_details is not present
 
     $("#submenu").show();
