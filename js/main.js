@@ -177,9 +177,10 @@ var mapView = {
     $('body').on('click', ".bot-user .bot-items .btn:not(.tFind)", function() {
       var itemIndex = $(this).parent().parent().find('.btn').index($(this)) + 1,
         userId = $(this).closest('ul').data('user-id');
-      if ($('#submenu').is(':visible') && itemIndex == submenuIndex && currentUserId == userId) {
+      if ($('#submenu').is(':visible') && !$('#submenu').data('gym-info') && itemIndex == submenuIndex && currentUserId == userId) {
         $('#submenu').toggle();
       } else {
+        if ($('#submenu').data('gym-info')) { $('#submenu').removeData('gym-info'); }
         submenuIndex = itemIndex;
         currentUserId = userId;
         self.buildMenu(userId, itemIndex);
@@ -188,6 +189,7 @@ var mapView = {
 
     $('body').on('click', '#close', function() {
       $('#submenu').toggle();
+      if ($('#submenu').data('gym-info')) { $('#submenu').removeData('gym-info'); }
     });
 
     $('body').on('click', '.tFind', function() {
@@ -703,8 +705,9 @@ var mapView = {
   buildGymInfo: function(fort) {
     if (!fort || !Object.keys(fort).length) { return; } // if fort is not defined or if it's an empty object or if gym_details is not present
 
-    $("#submenu").show();
-    $("#sortButtons").hide();
+    $('#submenu').show();
+    $('#submenu').data('gym-info', '1');
+    $('#sortButtons').html('');
 
     var self = this,
       out = '';

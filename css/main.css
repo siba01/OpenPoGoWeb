@@ -273,7 +273,7 @@ html, body {
 
 .bots_head { cursor: pointer; }
 
-.pokemon-sort { margin-top: -5px; }
+.pokemon-sort, .pokedex-sort { margin-top: -5px; }
 
 .bot-exp-bar {
 	height: 1.5em;
