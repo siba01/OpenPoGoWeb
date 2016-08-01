@@ -61,6 +61,6 @@ var userInfo = {
 	zoom: 16,
 	userFollow: true,
 	botPath: true,
-	defaultMapStyle: "pokemongo",
+	defaultMapStyle: "pokemongo", // Available: maps, satellite, nolabels, light2, dark, pokemongo, light2_nolabels, dark_nolabels, pokemongo_nolabels, chrischi- (Chrisci-'s Pokemon Go style)
 	gMapsAPIKey: "YOUR_API_KEY_HERE"
 };
