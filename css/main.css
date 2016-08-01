@@ -406,7 +406,7 @@ html, body {
 .gym-image {
     width: 250px;
     height: 250px;
-    background-size: 100%;
+    background-size: cover;
     background-position: center;
     border: 1px solid #ddd;
     border-radius: 100%;

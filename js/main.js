@@ -801,7 +801,7 @@ var mapView = {
                   lng: parseFloat(fort.longitude)
                 },
                 zIndex: 1,
-                icon: 'image/forts/img_pokestop.png'
+                icon: (fort.hasOwnProperty('lure_info') ? 'image/forts/img_pokestop_lure.png' : 'image/forts/img_pokestop.png')
               });
             } else {
               self.forts[fort.id] = new google.maps.Marker({
