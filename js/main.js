@@ -905,7 +905,7 @@ var mapView = {
                 zIndex: 5 + (Object.keys(self.user_data).length - Object.keys(self.user_data).indexOf(username) - 1),
                 clickable: true
             });
-            var contentString = '<b>Trainer:</b> ' + username;
+            var contentString = '<b>Trainer:</b> ' + (self.settings.users[username].displayName ? self.settings.users[username].displayName : username);
             self.user_data[username].infowindow = new google.maps.InfoWindow({
                 content: contentString
             });
@@ -934,16 +934,21 @@ var mapView = {
             }
         }
         self.setBotPathOptions(self.settings.botPath);
-        if (Object.keys(self.settings.users).length === 1 && self.settings.userZoom === true) {
+
+        var botCounts = Object.keys(self.settings.users).length,
+            focusUser = self.settings.users[username].focus;
+
+        if (botCounts === 1 && self.settings.userZoom) {
             self.map.setZoom(self.settings.zoom);
         }
-        if (Object.keys(self.settings.users).length === 1 && self.settings.userFollow === true) {
+        if (botCounts === 1 && self.settings.userFollow) {
             self.map.panTo({
                 lat: parseFloat(data.lat),
                 lng: parseFloat(data.lng)
             });
         }
-        if (!self.hasFocused && Object.keys(self.settings.users).length > 1 && self.settings.users[username].focus) {
+
+        if (!self.hasFocused && focusUser && (botCounts > 1 || (botCounts === 1 && !self.settings.userZoom && !self.settings.userFollow))) {
             self.map.setZoom(self.settings.zoom);
             self.map.panTo({
                 lat: parseFloat(data.lat),

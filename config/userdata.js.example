@@ -1,19 +1,16 @@
-// MUST CONFIGURE THE USERS ARRAY AND GOOGLE MAPS API KEY.
-// YOU CAN GET A KEY HERE: https://developers.google.com/maps/documentation/javascript/get-api-key
+/*
+ * YOU MUST CONFIGURE THE SETTINGS BELOW!
+ */
 var userInfo = {
 	users: {
-		/*
-		 * 'displayName' is merely for appearance sake, you still need to fill in your username in the "YOUR_USERNAME" or "YOUR_OTHER_USERNAME" area (optional)
-		 * 'prioritizeLocationData' will define whether the map should prioritize location data of a particular bot among the other bots, in case you have more than 1 bot providing data for the same location. This option was implemented to deal with out-of-sync location data. If none of your bot has this paramter, it will automatically fallback to your first bot (optional)
-		 * 'colors > botPath' will be used to color the bot's path in the map (mandatory)
-		 * 'colors > primary' will be used as the primary color for buttons in the bot menu and experience bar in the trainer info submenu (mandatory)
-		 * 'colors > secondary' will be used as the secondary color for buttons in the bot menu and experience bar in the trainer info submenu (mandatory)
-		 * 'icon > path' is the path to the trainer icon which will be used as the bot's marker in the map (mandatory)
-		 * 'icon > width' is the desired width of the trainer icon, if not defined or the value is lower than 0, the original size will be used (optional)
-		 * 'icon > height' is the desired height of the trainer icon, if not defined or the value is lower than 0, the original size will be used (optional)
-		 * 'focus' will define whether the bot should be focused in the first load, this will only be used when there are more than 1 user (optional)
+		/* 'displayName' is merely for appearance sake, you still need to fill in your username in the "YOUR_USERNAME" or "YOUR_OTHER_USERNAME" area (optional).
+		 * 'colors > path' will be used to color the bot's path in the map (mandatory).
+		 * 'colors > primary' will be used as the primary color for buttons in the bot menu and experience bar in the trainer info submenu (mandatory).
+		 * 'colors > secondary' will be used as the secondary color for buttons in the bot menu and experience bar in the trainer info submenu (mandatory).
+		 * 'icon' is the path to the trainer icon which will be used as the bot's marker in the map (mandatory).
+		 * 'focus' will define whether the bot should be focused in the first load (optional, if there is only 1 user this will not work when userZoom and/or userFollow are enabled).
+		 * 'prioritizeLocationData' will define whether the Web Viewer should prioritize location data from the particular bot if you have more than 1 bot (optional).
 		 */
-
 		"YOUR_USERNAME": {
 			//displayName: "YOUR_DISPLAYNAME",
 			colors: {
@@ -56,11 +53,19 @@ var userInfo = {
 			}
 		},*/
 	},
-	collapseBotMenu: true,
-	userZoom: true,
-	zoom: 16,
-	userFollow: true,
-	botPath: true,
-	defaultMapStyle: "pokemongo", // Available: maps, satellite, nolabels, light2, dark, pokemongo, light2_nolabels, dark_nolabels, pokemongo_nolabels, chrischi- (Chrisci-'s Pokemon Go style)
+
+	collapseBotMenu: false, // Set whether to collapse bots menu on load.
+	userZoom: false, // Set whether to always zoom into the user with the 'zoom' level set below if there's only 1 user.
+	zoom: 16, // Zoom level for 'userZoom' and 'users > focus' settings.
+	userFollow: false, // Set whether to always follow the user if there's only 1 user.
+	botPath: true, // Set whether to show bots path on load.
+
+	/* Available styles: maps, satellite, nolabels, light2, dark, pokemongo, light2_nolabels, dark_nolabels, pokemongo_nolabels, chrischi- (Chrisci-'s Pokemon Go style).
+	 * This setting is changeable within the Web Viewer through the Settings menu. Once you change the map from there, your preference will be stored into your browser's cookies.
+	 * After that, the Web Viewer will always use the cookie and ignore whatever setting you set below.
+	 * NOTE: The Web Viewer will NEVER set a cookie into your browser if you don't change the map through the Settings menu. */
+	defaultMapStyle: "pokemongo",
+
+	// IMPORTANT: You must provide your own Google Maps API key. You can get one from here: https://developers.google.com/maps/documentation/javascript/get-api-key.
 	gMapsAPIKey: "YOUR_API_KEY_HERE"
 };
