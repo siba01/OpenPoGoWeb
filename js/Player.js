@@ -15,7 +15,14 @@ class Player {
         function filterInventory(arr, search) {
             var filtered = [];
             for (var i = 0; i < arr.length; i++) {
-                if (arr[i].inventory_item_data[search] != undefined) {
+                var inventory_item_data = arr[i].inventory_item_data;
+                // Failsafe when inventory_item_data array is not ready
+                if (!inventory_item_data) {
+                    console.log('Debug: Skipping inventory_item_data...\n' +
+                        'If this message keeps appearing for more than 10 seconds, you may want to confirm whether your JSON files are being updated by the bot.');
+                    break;
+                }
+                if (inventory_item_data[search]) {
                     filtered.push(arr[i]);
                 }
             }

@@ -89,6 +89,7 @@ var mapView = {
         'f'
     ],
     hasFocused: false,
+    prioritize: undefined,
     playerInfo: {},
     user_data: {},
     pathcoords: {},
@@ -228,22 +229,21 @@ var mapView = {
             fullscreenControlOptions: { position: google.maps.ControlPosition.TOP_LEFT }
         });
 
-        var ops = $('#mapStyles');
-        if (self.mapStyles != undefined && Object.keys(self.mapStyles).length && ops != undefined) {
-            ops.append('<li class="divider"></li>');
+        var mapStylesDropdown = $('#mapStyles');
+        if (self.mapStyles && Object.keys(self.mapStyles).length && mapStylesDropdown) {
+            mapStylesDropdown.append('<li class="divider"></li>');
             for (var s in self.mapStyles) {
                 if (self.mapStyles[s].name != undefined && self.mapStyles[s].style != undefined) {
-                    ops.append('<li><a data-style="' + s + '">' + self.mapStyles[s].name + '</a></li><li class="divider"></li>');
+                    mapStylesDropdown.append('<li><a data-style="' + s + '">' + self.mapStyles[s].name + '</a></li><li class="divider"></li>');
                 }
             }
-            ops.find('li.divider:last-child').remove(); // remove latest divider thingy
-            ops.find('li > a').click(self.changeMapStyle); // add click handler
+            mapStylesDropdown.find('li.divider:last-child').remove(); // Remove latest divider thingy
+            mapStylesDropdown.find('li > a').click(self.changeMapStyle); // Add click handler
         }
 
-        if (cookies) { Cookies.set('mapStyle', cookies, { expires: 365 }); } // refresh cookies
+        if (cookies) { Cookies.set('mapStyle', cookies, { expires: 365 }); } // Refresh cookies
 
         // Validate which user to prioritize in parsing location (this is for instances where multiple bots provide different data for the same location)
-        self.prioritize = undefined;
         for (var p in self.settings.users) { if (self.settings.users[p].prioritizeLocationData) { self.prioritize = p; break; } }
         if (!self.prioritize) { self.prioritize = Object.keys(self.settings.users)[0]; }
 
@@ -755,11 +755,20 @@ var mapView = {
             coords = self.pathcoords[username][self.pathcoords[username].length - 1],
             jsChkTime = moment(),
             jsChkTimeMin = moment(jsChkTime).subtract(30, 's');
+
         // Create the lone info_window which will be used to display PokeStop info if it doesn't exist
         if (!self.info_windows.fort) { self.info_windows.fort = new google.maps.InfoWindow(); }
+
+        // Failsafe when cells array is not ready
+        if (!data.cells) {
+            console.log('Debug: Skipping trainerFunc this turn since cells data is not ready.' +
+                'If this message keeps appearing for more than 10 seconds, you may want to confirm whether your location-YOUR_USERNAME.json file(s) are being updated by the bot.');
+            return;
+        }
+
         for (var i = 0; i < data.cells.length; i++) {
             var cell = data.cells[i];
-            if (data.cells[i].forts != undefined) {
+            if (data.cells[i].forts) {
                 for (var x = 0; x < data.cells[i].forts.length; x++) {
                     var fort_id = cell.forts[x].id;
                     if (self.forts[fort_id]) {
