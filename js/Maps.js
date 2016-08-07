@@ -242,7 +242,7 @@ class Maps {
                     // Change PokeStop icon
                     mScale = (isLured ? 22.5 : 15);
                     self.forts[id].marker.setOptions({
-                        icon: 'image/forts/img_pokestop' + (isLured ? '_lure' : '') + '.png'
+                        icon: 'image/forts/Pstop' + (isLured ? 'Lured' : '') + '.png'
                     });
 
                     // Update info window message (this will always be updated regardless of whether the lure status was different or not)
@@ -299,7 +299,7 @@ class Maps {
                             lng: parseFloat(self.forts[id].data.longitude)
                         },
                         zIndex: 1,
-                        icon: 'image/forts/img_pokestop' + (isLured ? '_lure' : '') + '.png'
+                        icon: 'image/forts/Pstop' + (isLured ? 'Lured' : '') + '.png'
                     });
 
                     var distance = (username == main.prioritize ?
