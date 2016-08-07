@@ -6,4 +6,5 @@ Web View for OpenPoGoBot and PokemonGo-Bot
 **Additional note:** If you want to see screenshots of all my modifications, please read the comments in every commit which has comments.
 
 ## Installation and Use
+To run the server (in linux) run the file: run.sh (with: ./run.sh)
 This project is a module of OpenPogoBot and PokemonGo-Bot (please refer to OpenPoGo/OpenPoGoWeb for the most recent Installation guide).
