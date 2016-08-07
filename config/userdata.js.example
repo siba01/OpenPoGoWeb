@@ -59,6 +59,7 @@ var userInfo = {
 	zoom: 16, // Zoom level for 'userZoom' and 'users > focus' settings.
 	userFollow: false, // Set whether to always follow the user if there's only 1 user.
 	botPath: true, // Set whether to show bots path on load.
+	gymTeamLogs: true, // Set whether to log gym team changes. Depending on your location, this may output too much logs.
 
 	/* Available styles: maps, satellite, nolabels, light2, dark, pokemongo, light2_nolabels, dark_nolabels, pokemongo_nolabels, chrischi- (Chrisci-'s Pokemon Go style).
 	 * This setting is changeable within the Web Viewer through the Settings menu. Once you change the map from there, your preference will be stored into your browser's cookies.

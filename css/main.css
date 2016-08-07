@@ -273,21 +273,21 @@ html, body {
 
 .gym-desc {
 	max-height: 100px;
-    overflow-x: hidden;
-    overflow-y: auto;
+	overflow-x: hidden;
+	overflow-y: auto;
 }
 
 .gym-image {
-    width: 250px;
-    height: 250px;
-    background-size: cover;
-    background-position: center;
-    border: 1px solid #ddd;
-    border-radius: 100%;
-    margin: 15px auto;
+	width: 250px;
+	height: 250px;
+	background-size: cover;
+	background-position: center;
+	border: 1px solid #ddd;
+	border-radius: 100%;
+	margin: 15px auto;
 }
 
 .gym-info-separator {
 	border-bottom: 1px solid #ddd;
-    margin: 15px 0;
+	margin: 15px 0;
 }

@@ -3,22 +3,7 @@
 var logger = new Logger("#logs-panel .card-content #logs");
 
 $(document).ready(function() {
-    mapView.init();
-    // https://github.com/PokemonGoF/PokemonGo-Bot doesn't support WebSocket. Suppress error by disabling this entirely
-    /*var socket = io.connect('http://' + document.domain + ':' + location.port + '/event');
-
-    socket.on('connect', function() {
-        console.log('connected!');
-    });
-    socket.on('logging', function(msg) {
-        for(var i = 0; i < msg.length; i++) {
-            logger.log({
-                message: msg[i].output,
-                color: msg[i].color,
-                toast: msg[i].toast || false
-            });
-        }
-    });*/
+    main.init();
 });
 
 function loadJSON(path, extra) {
@@ -41,10 +26,9 @@ function loadJSON(path, extra) {
     });
 }
 
-var mapView = {
+var main = {
     user_index: 0,
     emptyDex: [],
-    forts: [],
     info_windows: [],
     numTrainers: [
         177,
@@ -67,6 +51,7 @@ var mapView = {
         9: 40000,
         10: 50000
     },
+    maps: undefined,
     mapStyles: {
         "nolabels": { name: "No Labels", style: [{featureType:"poi",elementType:"labels",stylers:[{visibility:"off"}]},{featureType:"all",elementType:"labels.icon",stylers:[{visibility:"off"}]}] },
         "light2": { name: "Light2", style: [{elementType:"geometry",stylers:[{hue:"#ff4400"},{saturation:-68},{lightness:-4},{gamma:.72}]},{featureType:"road",elementType:"labels.icon"},{featureType:"landscape.man_made",elementType:"geometry",stylers:[{hue:"#0077ff"},{gamma:3.1}]},{featureType:"water",stylers:[{hue:"#00ccff"},{gamma:.44},{saturation:-33}]},{featureType:"poi.park",stylers:[{hue:"#44ff00"},{saturation:-23}]},{featureType:"water",elementType:"labels.text.fill",stylers:[{hue:"#007fff"},{gamma:.77},{saturation:65},{lightness:99}]},{featureType:"water",elementType:"labels.text.stroke",stylers:[{gamma:.11},{weight:5.6},{saturation:99},{hue:"#0091ff"},{lightness:-86}]},{featureType:"transit.line",elementType:"geometry",stylers:[{lightness:-48},{hue:"#ff5e00"},{gamma:1.2},{saturation:-23}]},{featureType:"transit",elementType:"labels.text.stroke",stylers:[{saturation:-64},{hue:"#ff9100"},{lightness:16},{gamma:.47},{weight:2.7}]}] },
@@ -92,10 +77,8 @@ var mapView = {
     prioritize: undefined,
     playerInfo: {},
     user_data: {},
-    pathcoords: {},
     settings: {},
-    customPaths: {}, // Array of custom paths for Paths menu
-    customPathsLine: 0, // Polyline of all the custom paths for Paths menu
+    paths: undefined,
     init: function() {
         var self = this;
         self.settings = $.extend(true, self.settings, userInfo);
@@ -107,23 +90,18 @@ var mapView = {
 
         for (var user in self.settings.users) {
             self.user_data[user] = new Player(user);
-            self.pathcoords[user] = [];
         }
 
         $.getScript('https://maps.googleapis.com/maps/api/js?key={0}&libraries=drawing'.format(self.settings.gMapsAPIKey), function() {
-            self.initMap();
+            self.maps = new Maps();
+            self.paths = new Paths();
+            
+            self.maps.addLocations();
+            //self.maps.addCatchable();
+            setInterval(self.maps.addLocations, 1000);
+            //setInterval(self.maps.addCatchable, 1000);
+            setInterval(self.addInventory, 5000);
         });
-    },
-    setBotPathOptions: function(checked) {
-            var self = this;
-            for (var user in self.settings.users) {
-                var trainerPath = self.user_data[user].trainerPath;
-                if (!trainerPath) { continue; } // Failsafe in case user data hasn't been fully loaded
-                self.user_data[user].trainerPath.setOptions({
-                    strokeOpacity: (checked ? 1.0 : 0.0),
-                    zIndex: (checked ? 4 : 0)
-                });
-            }
     },
     bindUi: function() {
         var self = this;
@@ -141,7 +119,7 @@ var mapView = {
 
         $('#strokeOn').change(function() {
             self.settings.botPath = this.checked;
-            self.setBotPathOptions(this.checked);
+            self.maps.setBotPathOptions(this.checked);
         });
 
         $('#optionsButton').click(function() {
@@ -180,7 +158,7 @@ var mapView = {
         });
 
         $('body').on('click', '.tFind', function() {
-            self.findBot($(this).closest('ul').data('user-id'));
+            self.maps.findBot($(this).closest('ul').data('user-id'));
         });
 
         // Binding sorts
@@ -194,78 +172,8 @@ var mapView = {
         });
 
     },
-    changeMapStyle: function(style) {
-        var self = mapView,
-            style = $(this).data('style');
-
-        if (!style) { return; }
-
-        if (self.mapStyles[style] && self.mapStyles[style].style) {
-            self.map.setOptions({
-                mapTypeId: 'roadmap',
-                styles: self.mapStyles[style].style
-            });
-        } else {
-            self.map.setOptions({
-                mapTypeId: (style == 'satellite' ? 'satellite' : 'roadmap'),
-                styles: []
-            });
-        }
-
-        Cookies.set('mapStyle', style, { expires: 365 });
-    },
-    initMap: function() {
-        var self = this,
-            cookies = Cookies.get('mapStyle'),
-            desiredStyle = cookies || self.settings.defaultMapStyle || undefined;
-        self.map = new google.maps.Map(document.getElementById('map'), {
-            center: { lat: 50.0830986, lng: 6.7613762 },
-            zoom: 8,
-            mapTypeId: (desiredStyle && desiredStyle == 'satellite' ? 'satellite' : 'roadmap'),
-            styles: ((desiredStyle && desiredStyle != 'satellite' && self.mapStyles[desiredStyle] && self.mapStyles[desiredStyle].style) ? self.mapStyles[desiredStyle].style : []),
-            streetViewControl: false,
-            mapTypeControl: false,
-            fullscreenControl: true,
-            fullscreenControlOptions: { position: google.maps.ControlPosition.TOP_LEFT }
-        });
-
-        var mapStylesDropdown = $('#mapStyles');
-        if (self.mapStyles && Object.keys(self.mapStyles).length && mapStylesDropdown) {
-            mapStylesDropdown.append('<li class="divider"></li>');
-            for (var s in self.mapStyles) {
-                if (self.mapStyles[s].name != undefined && self.mapStyles[s].style != undefined) {
-                    mapStylesDropdown.append('<li><a data-style="' + s + '">' + self.mapStyles[s].name + '</a></li><li class="divider"></li>');
-                }
-            }
-            mapStylesDropdown.find('li.divider:last-child').remove(); // Remove latest divider thingy
-            mapStylesDropdown.find('li > a').click(self.changeMapStyle); // Add click handler
-        }
-
-        if (cookies) { Cookies.set('mapStyle', cookies, { expires: 365 }); } // Refresh cookies
-
-        // Validate which user to prioritize in parsing location (this is for instances where multiple bots provide different data for the same location)
-        for (var p in self.settings.users) { if (self.settings.users[p].prioritizeLocationData) { self.prioritize = p; break; } }
-        if (!self.prioritize) { self.prioritize = Object.keys(self.settings.users)[0]; }
-
-        self.placeTrainer();
-        self.addCatchable();
-        setInterval(self.placeTrainer, 1000);
-        setInterval(self.addCatchable, 1000);
-        setInterval(self.addInventory, 5000);
-
-        self.bindPathMenu();
-    },
-    addCatchable: function() {
-        var self = mapView;
-        for (var user in self.settings.users) {
-            loadJSON('catchable-' + user + '.json', user).then(function(data) {
-                // data[0] contains the necessary data, data[1] contains the username
-                self.catchSuccess(data[0], data[1]);
-            });
-        }
-    },
     addInventory: function() {
-        var self = mapView;
+        var self = main;
         for (var user in self.settings.users) {
             loadJSON('inventory-' + user + '.json', user).then(function(data) {
                 // data[0] contains the necessary data, data[1] contains the username
@@ -285,7 +193,7 @@ var mapView = {
                 $('#sortButtons').html('');
 
                 out += '<div class="row"><div class="col s12"><h5>' +
-                    (self.settings.users[user_id].displayName ? self.settings.users[user_id].displayName : user_id) +
+                    (self.settings.users[user_id].displayName || user_id) +
                     '</h5><br>Level: ' +
                     player.getLevel() +
                     '<br><div class="progress bot-exp-bar" style="background-color: ' +
@@ -409,7 +317,7 @@ var mapView = {
         for (var user in users) {
             // Rewrote every line to be using string join instead of that '\' thingy for consistency sake (I mean, everything else does it that way, so..)
             out += '<li class="bot-user">' +
-                '<div class="collapsible-header bot-name">' + (users[user].displayName ? users[user].displayName : user) + '</div>' +
+                '<div class="collapsible-header bot-name">' + (users[user].displayName || user) + '</div>' +
                 '<div class="collapsible-body">' +
                     '<ul class="bot-items" data-user-id="' + user + '">' +
                         '<li><a class="bot-btn-' + i + ' waves-effect waves-light btn tInfo">Info</a></li><br>' +
@@ -430,97 +338,8 @@ var mapView = {
         $('#trainers').html(out);
         $('.collapsible').collapsible();
     },
-    catchSuccess: function(data, username) {
-        var self = mapView,
-            user = self.user_data[username],
-            poke_name = '';
-        // Create the lone info_window which will be used to display PokeStop info if it doesn't exist
-        if (!self.info_windows.pokemon) { self.info_windows.pokemon = new google.maps.InfoWindow(); }
-        if (data !== undefined && Object.keys(data).length) {
-            if (user.catchable == undefined) {
-                user.catchable = {};
-            }
-            var userCatchableLength = Object.keys(user.catchable).length,
-                momentNow = moment();
-            if (data.latitude !== undefined) {
-                // Remove last Pokemon if it's not the current Pokemon or the expiration time has passed
-                if (userCatchableLength && ((user.catchable.encounter_id != data.encounter_id) || moment(user.catchable.expiration_timestamp_ms).isSameOrBefore(momentNow))) {
-                    logger.log({
-                        message: "[" + (self.settings.users[username].displayName ? self.settings.users[username].displayName : username) + "] " + user.catchable.name + " has been caught or fled"
-                    });
-                    user.catchable.marker.setMap(null);
-                    user.catchable = {};
-                }
-                // Process current Pokemon if last Pokemon didn't exist or was of different instance and current Pokemon hasn't expired
-                if (!userCatchableLength && !moment(data.expiration_timestamp_ms).isSameOrBefore(momentNow)) {
-                    user.catchable.name = Pokemon.getPokemonById(data.pokemon_id).Name;
-                    logger.log({
-                        message: "[" + (self.settings.users[username].displayName ? self.settings.users[username].displayName : username) + "] " + user.catchable.name + " appeared",
-                        color: "green"
-                    });
-                    user.catchable.marker = new google.maps.Marker({
-                        map: self.map,
-                        position: {
-                            lat: parseFloat(data.latitude),
-                            lng: parseFloat(data.longitude)
-                        },
-                        icon: {
-                            url: 'image/pokemon/' + Pokemon.getImageById(data.pokemon_id),
-                            scaledSize: new google.maps.Size(45, 45)
-                        },
-                        zIndex: 3,
-                        clickable: true
-                    });
-                    user.catchable.infowindow = '<b>Spawn Point ID:</b> ' +
-                        data.spawn_point_id +
-                        '<br><b>Encounter ID:</b> ' +
-                        data.encounter_id +
-                        '<br><b>Name:</b> ' +
-                        user.catchable.name +
-                        '<br><br>This Pokemon will expire at ' +
-                        moment(data.expiration_timestamp_ms).format('hh:mm:ss A');
-                    google.maps.event.addListener(user.catchable.marker, 'click', (function(username) {
-                        return function() {
-                            self.info_windows.pokemon.setContent(self.user_data[username].catchable.infowindow);
-                            self.info_windows.pokemon.open(this.map, this);
-                        };
-                    })(username));
-                    user.catchable.encounter_id = data.encounter_id;
-                    user.catchable.expiration_timestamp_ms = data.expiration_timestamp_ms;
-                }
-            }
-        } else {
-            // very unlikely to be triggered with PokemonGoF as it doesn't seem to clear catchable file after successfully capturing the Pokemon
-            if (user.catchable !== undefined && Object.keys(user.catchable).length > 0) {
-                logger.log({
-                    message: "[" + (self.settings.users[username].displayName ? self.settings.users[username].displayName : username) + "] " + user.catchable.name + " has been caught or fled"
-                });
-                user.catchable.marker.setMap(null);
-                user.catchable = undefined;
-            }
-        }
-    },
     errorFunc: function(xhr) {
         console.error(xhr);
-    },
-    findBot: function(user_index) {
-        var self = this,
-            coords = self.pathcoords[user_index][self.pathcoords[user_index].length - 1];
-
-        self.map.setZoom(self.settings.zoom);
-        self.map.panTo({
-            lat: parseFloat(coords.lat),
-            lng: parseFloat(coords.lng)
-        });
-    },
-    placeTrainer: function() {
-        var self = mapView;
-        for (var user in self.settings.users) {
-            loadJSON('location-' + user + '.json', user).then(function(data) {
-                // data[0] contains the necessary data, data[1] contains the username
-                self.trainerFunc(data[0], data[1]);
-            });
-        }
     },
     sortAndShowBagPokemon: function(sortOn, user_id) {
         var self = this,
@@ -597,7 +416,7 @@ var mapView = {
         if (Object.keys(user.incubators)) {
             var incubators = user.incubators[0].inventory_item_data.egg_incubators.egg_incubator;
             for (var i = 0; i < incubators.length; i++) {
-                var totalToWalk    = incubators[i].target_km_walked - incubators[i].start_km_walked,
+                var totalToWalk = incubators[i].target_km_walked - incubators[i].start_km_walked,
                     kmsLeft = incubators[i].target_km_walked - self.user_data[user_id].stats.km_walked,
                     walked = totalToWalk - kmsLeft,
                     img = (incubators[i].item_id == 902 ? 'EggIncubator' : 'EggIncubatorUnlimited'),
@@ -669,15 +488,16 @@ var mapView = {
         return level;
     },
     buildGymInfo: function(fort) {
+        var self = this;
+
         if (!fort || !Object.keys(fort).length) { return; } // if fort is not defined or if it's an empty object or if gym_details is not present
 
         $('#submenu').show();
         $('#submenu').data('gym-info', '1');
         $('#sortButtons').html('');
 
-        var self = this,
-            out = '';
-        var gym_details = fort.gym_details,
+        var out = '',
+            gym_details = fort.gym_details,
             gym_memberships = (gym_details.gym_state ? gym_details.gym_state.memberships : undefined);
 
         if (gym_details.name && gym_details.urls && gym_details.urls.length) {
@@ -750,352 +570,40 @@ var mapView = {
         $('#subtitle').html('Gym Info');
         $('#subcontent').html(out);
     },
-    trainerFunc: function(data, username) {
-        var self = mapView,
-            coords = self.pathcoords[username][self.pathcoords[username].length - 1],
-            jsChkTime = moment(),
-            jsChkTimeMin = moment(jsChkTime).subtract(30, 's');
+    buildNearbyPokemonsList: function() {
+        var self = this,
+            users = self.settings.users;
+        var out = '<div class="col s12"><ul id="nearby-pokemons-list" class="collapsible" data-collapsible="accordion">' +
+            '<li><div class="collapsible-header">' +
+            '<i class="material-icons">my_location</i>Nearby</div>' +
+            '<div class="collapsible-body" style="padding: 0; border: 0">' +
+            '<ul class="collapsible bots-list-collapsible" data-collapsible="accordion" style="border: 0; margin: 0; box-shadow: none">';
 
-        // Create the lone info_window which will be used to display PokeStop info if it doesn't exist
-        if (!self.info_windows.fort) { self.info_windows.fort = new google.maps.InfoWindow(); }
-
-        // Failsafe when cells array is not ready
-        if (!data.cells) {
-            console.log('Debug: Skipping trainerFunc this turn since cells data is not ready.' +
-                'If this message keeps appearing for more than 10 seconds, you may want to confirm whether your location-YOUR_USERNAME.json file(s) are being updated by the bot.');
-            return;
+        var i = 0;
+        for (var user in users) {
+            // Rewrote every line to be using string join instead of that '\' thingy for consistency sake (I mean, everything else does it that way, so..)
+            out += '<li class="bot-user">' +
+                '<div class="collapsible-header bot-name">' + (users[user].displayName || user) + '</div>' +
+                '<div class="collapsible-body" style="padding: 1em 0">' +
+                    '<div class="row" style="margin: 0">' +
+                        '<div class="col s4"><img src="image/pokemon/001.png"></div>' +
+                        '<div class="col s4"><img src="image/pokemon/002.png"></div>' +
+                        '<div class="col s4"><img src="image/pokemon/003.png"></div>' +
+                        '<div class="col s4"><img src="image/pokemon/004.png"></div>' +
+                        '<div class="col s4"><img src="image/pokemon/005.png"></div>' +
+                        '<div class="col s4"><img src="image/pokemon/006.png"></div>' +
+                    '</div>' +
+                '</div>' +
+            '</li>' +
+            '<style>' +
+                '.bot-btn-' + i + ' { background-color: ' + users[user].colors.primary + '; }' +
+                '.bot-btn-' + i + ':hover { background-color: ' + users[user].colors.secondary + '; }' +
+            '</style>';
+            i += 1;
         }
-
-        for (var i = 0; i < data.cells.length; i++) {
-            var cell = data.cells[i];
-            if (data.cells[i].forts) {
-                for (var x = 0; x < data.cells[i].forts.length; x++) {
-                    var fort_id = cell.forts[x].id;
-                    if (self.forts[fort_id]) {
-                        // Process only if the new data comes from the same origin
-                        if (self.forts[fort_id].owner !== self.prioritize) { break; }
-
-                        // Process only if the last timestamp was at least 15 seconds (experimental)
-                        if (moment(jsChkTimeMin).isBefore(self.forts[fort_id].timestamp)) { break; }
-
-                        // Update existing fort data as necessary
-                        var fort_data = self.forts[fort_id].data;
-
-                        if (fort_data.type === 1) {
-                            var old_lure_info = fort_data.hasOwnProperty('lure_info'),
-                                new_lure_info = cell.forts[x].hasOwnProperty('lure_info'),
-                                is_lured = 0, lure_timestamp = 0;
-                            // Validate lure effect
-                            if (new_lure_info) {
-                                lure_timestamp = cell.forts[x].lure_info.lure_expires_timestamp_ms;
-                                is_lured = (!jsChkTime.isSameOrAfter(lure_timestamp) ? 1 : 0);
-                            }
-                            // Change PokeStop icon if necessary
-                            if (new_lure_info != old_lure_info) {
-                                self.forts[fort_id].marker.setOptions({ icon: (is_lured ? 'image/forts/img_pokestop_lure.png' : 'image/forts/img_pokestop.png') });
-                            }
-                            // Update info window message (this will always be updated regardless of whether the lure status was different or not)
-                            self.forts[fort_id].infowindow = '<b>ID:</b> ' + fort_data.id + '<br><b>Type:</b> PokeStop' +
-                                (is_lured ? '<br><br>The lure effect in this PokeStop will expire at ' + moment(lure_timestamp).format('hh:mm:ss A') : '');
-                        } else {
-                            // Change Gym icon if necessary
-                            var old_team = fort_data.owned_by_team || 0,
-                                new_team = cell.forts[x].owned_by_team || 0,
-                                gym_name = fort_data.gym_details.name;
-
-                            if (new_team !== old_team) {
-                                self.forts[fort_id].marker.setOptions({
-                                    icon: {
-                                        url: 'image/forts/' + self.teams[new_team] + '.png',
-                                        scaledSize: new google.maps.Size(25, 25)
-                                    }
-                                });
-                                logger.log({
-                                    message: (gym_name ? 'Gym: ' + gym_name : 'A faraway gym') +
-                                        (new_team != 0 ? ' is now owned by Team ' + self.teams[new_team] : ' was taken over from Team ' + self.teams[old_team])
-                                });
-                            }
-                        }
-                        // Now update existing data with the new one
-                        self.forts[fort_id].data = cell.forts[x];
-                        // Time mark (experimental)
-                        self.forts[fort_id].timestamp = jsChkTime;
-                    } else {
-                        // Create the fort if it didn't exist
-                        self.forts[fort_id] = {
-                            data: cell.forts[x],
-                            owner: username
-                        };
-                        var fort_data = self.forts[fort_id].data;
-                        if (fort_data.type === 1) {
-                            var is_lured = 0, lure_timestamp = 0;
-                            if (fort_data.hasOwnProperty('lure_info')) {
-                                lure_timestamp = fort_data.lure_info.lure_expires_timestamp_ms;
-                                is_lured = (!jsChkTime.isSameOrAfter(lure_timestamp) ? 1 : 0);
-                            }
-                            self.forts[fort_id].marker = new google.maps.Marker({
-                                map: self.map,
-                                position: {
-                                    lat: parseFloat(fort_data.latitude),
-                                    lng: parseFloat(fort_data.longitude)
-                                },
-                                zIndex: 1,
-                                icon: (is_lured ? 'image/forts/img_pokestop_lure.png' : 'image/forts/img_pokestop.png')
-                            });
-                            self.forts[fort_id].infowindow = '<b>ID:</b> ' + fort_data.id + '<br><b>Type:</b> PokeStop' +
-                                (is_lured ? '<br><br>The lure effect in this PokeStop will expire at ' + moment(lure_timestamp).format('hh:mm:ss A') : '');
-                        } else {
-                            self.forts[fort_id].marker = new google.maps.Marker({
-                                map: self.map,
-                                position: {
-                                    lat: parseFloat(fort_data.latitude),
-                                    lng: parseFloat(fort_data.longitude)
-                                },
-                                zIndex: 2,
-                                icon: {
-                                    url: 'image/forts/' + self.teams[(fort_data.owned_by_team || 0)] + '.png',
-                                    scaledSize: new google.maps.Size(25, 25)
-                                }
-                            });
-                        }
-                        // Only pass over the fort ID to the listener so that when the data changes we won't have to re-create the listener
-                        google.maps.event.addListener(self.forts[fort_id].marker, 'click', (function(fort_id) {
-                            return function() {
-                                if (self.forts[fort_id].infowindow) {
-                                    self.info_windows.fort.setContent(self.forts[fort_id].infowindow);
-                                    self.info_windows.fort.open(this.map, this);
-                                } else {
-                                    self.buildGymInfo(self.forts[fort_id].data);
-                                }
-                            };
-                        })(fort_id));
-                        // Time mark (experimental)
-                        self.forts[fort_id].timestamp = jsChkTime;
-                    }
-                }
-            }
-        }
-        if (coords > 1) {
-            var tempcoords = [{
-                lat: parseFloat(data.lat),
-                lng: parseFloat(data.lng)
-            }];
-            if (tempcoords.lat != coords.lat && tempcoords.lng != coords.lng || self.pathcoords[username].length === 1) {
-                self.pathcoords[username].push({
-                    lat: parseFloat(data.lat),
-                    lng: parseFloat(data.lng)
-                });
-            }
-        } else {
-            self.pathcoords[username].push({
-                lat: parseFloat(data.lat),
-                lng: parseFloat(data.lng)
-            });
-        }
-        if (self.user_data[username].hasOwnProperty('marker') === false) {
-            self.buildTrainerList();
-            self.addInventory();
-            logger.log({
-                message: "Trainer loaded: " + (self.settings.users[username].displayName ? self.settings.users[username].displayName : username),
-                color: "blue"
-            });
-            var iconSet = { url: self.settings.users[username].icon.path };
-            if ((self.settings.users[username].icon.width != undefined) && (self.settings.users[username].icon.height != undefined) &&
-                    (self.settings.users[username].icon.width > -1) && (self.settings.users[username].icon.height > -1)) {
-                iconSet.scaledSize = new google.maps.Size(self.settings.users[username].icon.width, self.settings.users[username].icon.height);
-            }
-            self.user_data[username].marker = new google.maps.Marker({
-                map: self.map,
-                position: {
-                    lat: parseFloat(data.lat),
-                    lng: parseFloat(data.lng)
-                },
-                icon: iconSet,
-                zIndex: 5 + (Object.keys(self.user_data).length - Object.keys(self.user_data).indexOf(username) - 1),
-                clickable: true
-            });
-            var contentString = '<b>Trainer:</b> ' + (self.settings.users[username].displayName ? self.settings.users[username].displayName : username);
-            self.user_data[username].infowindow = new google.maps.InfoWindow({
-                content: contentString
-            });
-            google.maps.event.addListener(self.user_data[username].marker, 'click', (function(content, infowindow) {
-                return function() {
-                    infowindow.setContent(content);
-                    infowindow.open(this.map, this);
-                };
-            })(contentString, self.user_data[username].infowindow));
-        } else {
-            self.user_data[username].marker.setPosition({
-                lat: parseFloat(data.lat),
-                lng: parseFloat(data.lng)
-            });
-            if (self.pathcoords[username].length === 2) {
-                self.user_data[username].trainerPath = new google.maps.Polyline({
-                    map: self.map,
-                    path: self.pathcoords[username],
-                    geodisc: true,
-                    strokeColor: self.settings.users[username].colors.botPath,
-                    strokeOpacity: 0.0,
-                    strokeWeight: 2
-                });
-            } else {
-                self.user_data[username].trainerPath.setPath(self.pathcoords[username]);
-            }
-        }
-        self.setBotPathOptions(self.settings.botPath);
-
-        var botCounts = Object.keys(self.settings.users).length,
-            focusUser = self.settings.users[username].focus;
-
-        if (botCounts === 1 && self.settings.userZoom) {
-            self.map.setZoom(self.settings.zoom);
-        }
-        if (botCounts === 1 && self.settings.userFollow) {
-            self.map.panTo({
-                lat: parseFloat(data.lat),
-                lng: parseFloat(data.lng)
-            });
-        }
-
-        if (!self.hasFocused && focusUser && (botCounts > 1 || (botCounts === 1 && !self.settings.userZoom && !self.settings.userFollow))) {
-            self.map.setZoom(self.settings.zoom);
-            self.map.panTo({
-                lat: parseFloat(data.lat),
-                lng: parseFloat(data.lng)
-            });
-            self.hasFocused = true;
-        }
-    },
-    addPathMarker: function() {
-        var self = mapView,
-            i = Object.keys(self.customPaths).length;
-
-        self.customPaths[i] = {};
-
-        self.customPaths[i].marker = new google.maps.Marker({
-            position: self.map.getCenter(),
-            map: self.map,
-            draggable: true,
-            clickable: true,
-            title: 'Path #' + i
-        });
-
-        var mapCenter = self.map.getCenter(),
-            contentString = '<b>Path #{0}</b><br><b>Latitude:</b> {1}<br><b>Longitude:</b> {2}';
-
-        self.customPaths[i].infowindow = new google.maps.InfoWindow({ content: contentString.format(i, mapCenter.lat(), mapCenter.lng()) });
-
-        google.maps.event.addListener(self.customPaths[i].marker, 'click', (function(infowindow) {
-            return function() { infowindow.open(this.map, this); };
-        })(self.customPaths[i].infowindow));
-
-        google.maps.event.addListener(self.customPaths[i].marker, 'drag', (function(content, infowindow) {
-            return function() { infowindow.setContent(contentString.format(i, this.getPosition().lat(), this.getPosition().lng())); self.updatePathLine(); };
-        })(contentString, self.customPaths[i].infowindow));
-
-        google.maps.event.addListener(self.customPaths[i].marker, 'dragend', (function(content, infowindow) {
-            return function() { infowindow.setContent(contentString.format(i, this.getPosition().lat(), this.getPosition().lng())); self.updatePathLine(); }
-        })(contentString, self.customPaths[i].infowindow));
-
-        $('#path_delete').removeClass('disabled');
-        $('#paths_download').removeClass('disabled');
-        $('#paths_clear').removeClass('disabled');
-
-        self.updatePathLine();
-    },
-    deletePathMarker: function() {
-        var self = mapView,
-            i = Object.keys(self.customPaths).length;
-
-        if (!i || !self.customPaths[i-1]) { return; } // if customPaths array is empty or previous path doesn't exist
-
-        self.customPaths[i-1].marker.setMap(null);
-        self.customPaths[i-1].infowindow.setMap(null);
-        delete self.customPaths[i-1];
-
-        if (!Object.keys(self.customPaths).length) {
-            $('#path_delete').addClass('disabled');
-            $('#paths_download').addClass('disabled');
-            $('#paths_clear').addClass('disabled');
-        }
-
-        self.updatePathLine();
-    },
-    updatePathLine: function() {
-        var self = mapView;
-
-        if (!Object.keys(self.customPaths).length) { // if customPaths array is empty
-            self.customPathsLine.setMap(null);
-            self.customPathsLine = 0;
-            return;
-        }
-
-        var ps = [];//, tpos;
-        for (var p in self.customPaths) {
-            //tpos = self.customPaths[p].marker.getPosition();
-            //ps.push({ lat: tpos.lat(), lng: tpos.lng() });
-            ps.push(self.customPaths[p].marker.getPosition());
-        }
-
-        if (!self.customPathsLine) {
-            self.customPathsLine = new google.maps.Polyline({
-                path: ps,
-                geodesic: true,
-                strokeColor: '#FF0000',
-                strokeOpacity: 1.0,
-                strokeWeight: 2
-            });
-        }
-
-        self.customPathsLine.setOptions({path: ps});
-        self.customPathsLine.setMap(self.map);
-    },
-    generatePathFile: function() {
-        var self = mapView,
-            i = Object.keys(self.customPaths).length;
-
-        if (!i) { return; } // if customPaths array is empty
-
-        var fileContent = '[';
-        for (var p in self.customPaths) {
-            fileContent += '\n\t{"location": "' + self.customPaths[p].marker.getPosition().lat() + ', ' + self.customPaths[p].marker.getPosition().lng() + '"}';
-            if (p < (i - 1)) { fileContent += ','; }
-        }
-        fileContent += '\n]';
-
-        var download = $('<a>');
-        download.attr('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(fileContent));
-        download.attr('download', 'path.json');
-        download.css('display', 'none');
-        $('body').append(download);
-        download[0].click();
-        download.remove();
-    },
-    clearPathMarkers: function() {
-        var self = mapView;
-
-        if (!Object.keys(self.customPaths).length) { return; } // if customPaths array is empty
-
-        for (var p in self.customPaths) {
-            self.customPaths[p].marker.setMap(null);
-            self.customPaths[p].infowindow.setMap(null);
-        }
-
-        self.customPaths = {};
-
-        $('#path_delete').addClass('disabled');
-        $('#paths_download').addClass('disabled');
-        $('#paths_clear').addClass('disabled');
-
-        self.updatePathLine();
-    },
-    bindPathMenu: function() {
-        var self = this;
-
-        $('#path_add').click(self.addPathMarker);
-        $('#path_delete').click(self.deletePathMarker);
-        $('#paths_download').click(self.generatePathFile);
-        $('#paths_clear').click(self.clearPathMarkers);
+        out += "</ul></div></li></ul></div>";
+        $('#nearby_pokemons').html(out);
+        $('.collapsible').collapsible();
     }
 };
 
