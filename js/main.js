@@ -69,6 +69,14 @@ var main = {
         'Valor',
         'Instinct'
     ],
+    pokemon_sprite: {
+        columns: 7,
+        icon_width: 65,
+        icon_height: 65,
+        sprite_width: 455,
+        sprite_height: 1430,
+        filename: 'image/pokemon_sprite_highres.png'
+    },
     trainerSex: [
         'm',
         'f'

@@ -8,8 +8,8 @@ class Maps {
     }
 
     init() {
-        var cookies = Cookies.get('mapStyle'),
-            desiredStyle = cookies || main.settings.defaultMapStyle || undefined;
+        var mapStyleCookies = Cookies.get('mapStyle'),
+            desiredStyle = mapStyleCookies || main.settings.defaultMapStyle || undefined;
 
         this.element = new google.maps.Map(document.getElementById('map'), {
             center: { lat: 50.0830986, lng: 6.7613762 },
@@ -34,7 +34,7 @@ class Maps {
             mapStylesDropdown.find('li > a').click(this.changeMapStyle); // Add click handler
         }
 
-        if (cookies) { Cookies.set('mapStyle', cookies, { expires: 365 }); } // Refresh cookies
+        if (mapStyleCookies) { Cookies.set('mapStyle', mapStyleCookies, { expires: 365 }); } // Refresh cookies
 
         // Validate which user to prioritize in parsing location (this is for instances where multiple bots provide different data for the same location)
         for (var p in main.settings.users) { if (main.settings.users[p].prioritizeLocationData) { main.prioritize = p; break; } }
@@ -92,8 +92,19 @@ class Maps {
             coords = self.pathcoords[username][self.pathcoords[username].length - 1];
 
         // Create info_window which will be used to display PokeStop and Catchable Pokemon info if they don't exist
-        if (!main.info_windows.fort) { main.info_windows.fort = new google.maps.InfoWindow(); }
-        if (!main.info_windows.catchable) { main.info_windows.catchable = new google.maps.InfoWindow(); }
+        if (!Object.keys(main.info_windows).length) {
+            main.info_windows = {
+                fort: {
+                    element: new google.maps.InfoWindow(),
+                    content: false, expiration: false
+                },
+                catchable: {
+                    element: new google.maps.InfoWindow(),
+                    content: false, expiration: false
+                }
+            };
+            setInterval(self.refreshInfoWindows, 1000);
+        }
 
         // Failsafe when cells array is not ready
         if (!data.cells) { return; }
@@ -101,7 +112,7 @@ class Maps {
         var allCatchablePokemons = [];
 
         for (var i = 0; i < data.cells.length; i++) {
-            if (data.cells[i].forts) { self.processForts(data.cells[i].forts, username); }
+            if (data.cells[i].forts) { self.processForts(data.cells[i].forts, username, data.lat, data.lng); }
             // Push all catchable_pokemons into a single array
             if (data.cells[i].catchable_pokemons) {
                 for (var j = 0; j < data.cells[i].catchable_pokemons.length; j++) { allCatchablePokemons.push(data.cells[i].catchable_pokemons[j]); }
@@ -203,9 +214,10 @@ class Maps {
         }
     }
 
-    processForts(data, username) {
+    processForts(data, username, lat, lng) {
         var self = this,
-            jsChkTime = moment();
+            jsChkTime = moment(),
+            mScale;
 
         for (var i = 0; i < data.length; i++) {
             var id = data[i].id;
@@ -218,23 +230,29 @@ class Maps {
                 if (self.forts[id].data.type === 1) {
                     var oldLureInfo = self.forts[id].data.hasOwnProperty('lure_info'),
                         newLureInfo = data[i].hasOwnProperty('lure_info'),
-                        isLured = 0,
-                        lureTimestamp = 0;
+                        isLured = false,
+                        lureTimestamp = false;
 
                     // Validate lure effect
                     if (newLureInfo) {
                         lureTimestamp = data[i].lure_info.lure_expires_timestamp_ms;
-                        isLured = (!jsChkTime.isSameOrAfter(lureTimestamp) ? 1 : 0);
+                        isLured = (!jsChkTime.isSameOrAfter(lureTimestamp) ? true : false);
                     }
 
-                    // Change PokeStop icon if necessary
-                    if (newLureInfo != oldLureInfo) {
-                        self.forts[id].marker.setOptions({ icon: (isLured ? 'image/forts/img_pokestop_lure.png' : 'image/forts/img_pokestop.png') });
-                    }
+                    // Change PokeStop icon
+                    mScale = (isLured ? 22.5 : 15);
+                    self.forts[id].marker.setOptions({
+                        icon: 'image/forts/img_pokestop' + (isLured ? '_lure' : '') + '.png'
+                    });
 
                     // Update info window message (this will always be updated regardless of whether the lure status was different or not)
+                    var distance = (username == main.prioritize ?
+                        parseFloat(self.haversine(lat, lng, self.forts[id].data.latitude, self.forts[id].data.longitude) * 1000).toFixed(0) : false);
+
                     self.forts[id].infowindow = '<b>ID:</b> ' + id + '<br><b>Type:</b> PokeStop' +
-                        (isLured ? '<br><br>The lure effect in this PokeStop will expire at ' + moment(lureTimestamp).format('hh:mm:ss A') : '');
+                        (distance ? '<br><b>Distance:</b> ' + distance + ' meter' + (distance !== 1 ? 's' : '') + ' from ' +
+                            (main.settings.users[username].displayName || username) : '') +
+                        (isLured ? '<br><br>Lure effect in this PokeStop will expire in {0}' : '');
                 } else {
                     // Change Gym icon if necessary
                     var oldTeam = self.forts[id].data.owned_by_team || 0,
@@ -242,10 +260,11 @@ class Maps {
                         gymName = self.forts[id].data.gym_details.name;
 
                     if (newTeam !== oldTeam) {
+                        mScale = (self.forts[id].data.owned_by_team ? 36 : 27);
                         self.forts[id].marker.setOptions({
                             icon: {
-                                url: 'image/forts/' + main.teams[newTeam] + '.png',
-                                scaledSize: new google.maps.Size(25, 25)
+                                url: 'image/forts/' + main.teams[(self.forts[id].data.owned_by_team || 0)] + (self.forts[id].data.owned_by_team ? '_new' : '') + '.png',
+                                scaledSize: new google.maps.Size(mScale, mScale)
                             }
                         });
                         if (main.settings.gymTeamLogs) {
@@ -264,14 +283,15 @@ class Maps {
                 self.forts[id] = { data: data[i] };
 
                 if (self.forts[id].data.type === 1) {
-                    var isLured = 0,
-                        lureTimestamp = 0;
+                    var isLured = false,
+                        lureTimestamp = false;
 
                     if (self.forts[id].data.hasOwnProperty('lure_info')) {
                         lureTimestamp = self.forts[id].data.lure_info.lure_expires_timestamp_ms;
-                        isLured = (!jsChkTime.isSameOrAfter(lureTimestamp) ? 1 : 0);
+                        isLured = (!jsChkTime.isSameOrAfter(lureTimestamp) ? true : false);
                     }
 
+                    mScale = (isLured ? 22.5 : 15);
                     self.forts[id].marker = new google.maps.Marker({
                         map: self.element,
                         position: {
@@ -279,12 +299,18 @@ class Maps {
                             lng: parseFloat(self.forts[id].data.longitude)
                         },
                         zIndex: 1,
-                        icon: (isLured ? 'image/forts/img_pokestop_lure.png' : 'image/forts/img_pokestop.png')
+                        icon: 'image/forts/img_pokestop' + (isLured ? '_lure' : '') + '.png'
                     });
 
+                    var distance = (username == main.prioritize ?
+                        parseFloat(self.haversine(lat, lng, self.forts[id].data.latitude, self.forts[id].data.longitude) * 1000).toFixed(0) : false);
+
                     self.forts[id].infowindow = '<b>ID:</b> ' + id + '<br><b>Type:</b> PokeStop' +
-                        (isLured ? '<br><br>The lure effect in this PokeStop will expire at ' + moment(lureTimestamp).format('hh:mm:ss A') : '');
+                        (distance ? '<br><b>Distance:</b> ' + distance + ' meter' + (distance !== 1 ? 's' : '') + ' from ' +
+                            (main.settings.users[username].displayName || username) : '') +
+                        (isLured ? '<br><br>Lure effect in this PokeStop will expire in {0}' : '');
                 } else {
+                    mScale = (self.forts[id].data.owned_by_team ? 36 : 27);
                     self.forts[id].marker = new google.maps.Marker({
                         map: self.element,
                         position: {
@@ -293,8 +319,8 @@ class Maps {
                         },
                         zIndex: 2,
                         icon: {
-                            url: 'image/forts/' + main.teams[(self.forts[id].data.owned_by_team || 0)] + '.png',
-                            scaledSize: new google.maps.Size(25, 25)
+                            url: 'image/forts/' + main.teams[(self.forts[id].data.owned_by_team || 0)] + (self.forts[id].data.owned_by_team ? '_new' : '') + '.png',
+                            scaledSize: new google.maps.Size(mScale, mScale)
                         }
                     });
                 }
@@ -303,8 +329,12 @@ class Maps {
                 google.maps.event.addListener(self.forts[id].marker, 'click', (function(id) {
                     return function() {
                         if (self.forts[id].infowindow) {
-                            main.info_windows.fort.setContent(self.forts[id].infowindow);
-                            main.info_windows.fort.open(this.map, this);
+                            var content = self.forts[id].infowindow,
+                                expiration = (self.forts[id].data.lure_info ? self.forts[id].data.lure_info.lure_expires_timestamp_ms : 0),
+                                diff = (expiration ? moment(expiration).diff(moment(), 's') : false);
+                            main.info_windows.fort.id = id;
+                            main.info_windows.fort.element.setContent((diff !== false ? content.format((diff >= 0 ? diff : 0) + ' second' + (diff != 1 ? 's' : '')) : content));
+                            main.info_windows.fort.element.open(this.map, this);
                         } else {
                             main.buildGymInfo(self.forts[id].data);
                         }
@@ -351,10 +381,11 @@ class Maps {
                     lat: parseFloat(data[i].latitude),
                     lng: parseFloat(data[i].longitude)
                 },
-                icon: {
+                icon: self.getGoogleSprite(data[i].pokemon_id - 1, main.pokemon_sprite, 50),
+                /*icon: {
                     url: 'image/pokemon/' + Pokemon.getImageById(data[i].pokemon_id),
                     scaledSize: new google.maps.Size(45, 45)
-                },
+                },*/
                 zIndex: 3,
                 clickable: true
             });
@@ -367,13 +398,17 @@ class Maps {
                 Pokemon.getPokemonById(data[i].pokemon_id).Name +
                 '<br><b>Trainer:</b> ' +
                 (main.settings.users[username].displayName || username) +
-                '<br><br>This Pokemon will expire at ' +
-                moment(data[i].expiration_timestamp_ms).format('hh:mm:ss A');
+                '<br><br>This Pokemon will expire in {0}';
 
             google.maps.event.addListener(catchable.marker, 'click', (function(username, encounter_id) {
                 return function() {
-                    main.info_windows.catchable.setContent(self.catchablePokemons[username][encounter_id].infowindow);
-                    main.info_windows.catchable.open(self.element, this);
+                    var content = self.catchablePokemons[username][encounter_id].infowindow,
+                        expiration = self.catchablePokemons[username][encounter_id].data.expiration_timestamp_ms,
+                        diff = moment(expiration).diff(moment(), 's');
+                    main.info_windows.catchable.id = encounter_id;
+                    main.info_windows.catchable.username = username;
+                    main.info_windows.catchable.element.setContent(content.format(diff + ' second' + (diff != 1 ? 's' : '')));
+                    main.info_windows.catchable.element.open(this.map, this);
                 };
             })(username, encounter_id));
 
@@ -389,10 +424,70 @@ class Maps {
     findBot(user_index) {
         var self = this,
             coords = self.pathcoords[user_index][self.pathcoords[user_index].length - 1];
+
         self.element.setZoom(main.settings.zoom);
         self.element.panTo({
             lat: parseFloat(coords.lat),
             lng: parseFloat(coords.lng)
         });
+    }
+
+    refreshInfoWindows() {
+        var self = main.maps;
+
+        if (!Object.keys(main.info_windows).length) { return; }
+
+        for (var i in main.info_windows) {
+            var id = main.info_windows[i].id,
+                content, expiration, diff;
+
+            if (!main.info_windows[i].element.getMap() || !id) { continue; }
+
+            if (i == 'fort') {
+                content = self.forts[id].infowindow;
+                expiration = (self.forts[id].data.lure_info ? self.forts[id].data.lure_info.lure_expires_timestamp_ms : 0);
+            } else if (i == 'catchable') {
+                content = self.catchablePokemons[main.info_windows[i].username][id].infowindow;
+                expiration = self.catchablePokemons[main.info_windows[i].username][id].data.expiration_timestamp_ms;
+            }
+
+            diff = (expiration ? moment(expiration).diff(moment(), 's') : false);
+            
+            main.info_windows[i].element.setContent((diff !== false ? content.format((diff >= 0 ? diff : 0) + ' second' + (diff != 1 ? 's' : '')) : content));
+        }
+    }
+
+    /** Haversine formula, courtesy of http://rosettacode.org/wiki/Haversine_formula#JavaScript **/
+    haversine() {
+        var radians = Array.prototype.map.call(arguments, function(deg) { return deg/180.0 * Math.PI; }),
+            lat1 = radians[0], lng1 = radians[1], lat2 = radians[2], lng2 = radians[3],
+            R = 6372.8,
+            dLat = lat2 - lat1,
+            dLon = lng2 - lng1,
+            a = Math.sin(dLat / 2) * Math.sin(dLat /2) + Math.sin(dLon / 2) * Math.sin(dLon /2) * Math.cos(lat1) * Math.cos(lat2),
+            c = 2 * Math.asin(Math.sqrt(a));
+       return R * c;
+    }
+
+
+    /** Functions below were taken from PokemonGo-Map **/
+    getGoogleSprite(index, sprite, display_height) {
+        display_height = Math.max(display_height, 3);
+        var scale = display_height / sprite.icon_height;
+        // Crop icon just a tiny bit to avoid bleedover from neighbor
+        var scaled_icon_size = new google.maps.Size(scale * sprite.icon_width - 1, scale * sprite.icon_height - 1);
+        var scaled_icon_offset = new google.maps.Point(
+            (index % sprite.columns) * sprite.icon_width * scale + 0.5,
+            Math.floor(index / sprite.columns) * sprite.icon_height * scale + 0.5);
+        var scaled_sprite_size = new google.maps.Size(scale * sprite.sprite_width, scale * sprite.sprite_height);
+        var scaled_icon_center_offset = new google.maps.Point(scale * sprite.icon_width / 2, scale * sprite.icon_height / 2);
+
+        return {
+            url: sprite.filename,
+            size: scaled_icon_size,
+            scaledSize: scaled_sprite_size,
+            origin: scaled_icon_offset,
+            anchor: scaled_icon_center_offset
+        };
     }
 }
