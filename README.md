@@ -12,6 +12,6 @@ On Windows, supposedly you can just open `run.sh` file as well. If that doesn't 
 ```
 @echo off
 
-# Starts PokemonGo-Web server
+rem Starts PokemonGo-Web server
 python -m SimpleHTTPServer
 ```
