@@ -1,6 +1,7 @@
 'use strict';
 
 var logger = new Logger("#logs-panel .card-content #logs");
+var notifier = new Notifications();
 
 $(document).ready(function() {
     main.init();
@@ -116,6 +117,7 @@ var main = {
         $('#switchPan').prop('checked', self.settings.userFollow);
         $('#switchZoom').prop('checked', self.settings.userZoom);
         $('#strokeOn').prop('checked', self.settings.botPath);
+        $('#switchNotifications').prop('checked', self.settings.sendNotifications);
 
         $('#switchPan').change(function() {
             self.settings.userFollow = this.checked;
@@ -128,6 +130,11 @@ var main = {
         $('#strokeOn').change(function() {
             self.settings.botPath = this.checked;
             self.maps.setBotPathOptions(this.checked);
+        });
+
+        $('#switchNotifications').change(function() {
+            self.settings.sendNotifications = this.checked;
+            notifier.toggle(this.checked);
         });
 
         $('#optionsButton').click(function() {

@@ -146,6 +146,9 @@ class Maps {
                 message: "Trainer loaded: " + (main.settings.users[username].displayName || username),
                 color: "blue"
             });
+            notifier.notify({
+                message: "Trainer loaded: " + (main.settings.users[username].displayName || username)
+            });
             var iconSet = { url: main.settings.users[username].icon.path };
             if ((main.settings.users[username].icon.width != undefined) && (main.settings.users[username].icon.height != undefined) &&
                     (main.settings.users[username].icon.width > -1) && (main.settings.users[username].icon.height > -1)) {
@@ -272,6 +275,12 @@ class Maps {
                                 message: (gymName ? 'Gym: ' + gymName : 'A faraway gym') +
                                     (newTeam != 0 ? ' is now owned by Team ' + main.teams[newTeam] : ' was taken over from Team ' + main.teams[oldTeam])
                             });
+
+                            notifier.notify({
+                                message: (gymName ? 'Gym: ' + gymName : 'A faraway gym') +
+                                (newTeam != 0 ? ' is now owned by Team ' + main.teams[newTeam] : ' was taken over from Team ' + main.teams[oldTeam])
+                            });
+
                         }
                     }
                 }
@@ -359,6 +368,11 @@ class Maps {
                             Pokemon.getPokemonById(self.catchablePokemons[username][encounter_id].data.pokemon_id).Name +
                             " has been caught or fled"
                     });
+                    notifier.notify({
+                        message: "[" + (main.settings.users[username].displayName || username) + "] " +
+                        Pokemon.getPokemonById(self.catchablePokemons[username][encounter_id].data.pokemon_id).Name +
+                        " has been caught or fled"
+                    });
                     self.catchablePokemons[username][encounter_id].marker.setMap(null);
                     delete self.catchablePokemons[username][encounter_id];
                 }
@@ -417,6 +431,10 @@ class Maps {
             logger.log({
                 message: "[" + (main.settings.users[username].displayName || username) + "] " + Pokemon.getPokemonById(data[i].pokemon_id).Name + " appeared",
                 color: "green"
+            });
+
+            notifier.notify({
+                message: Pokemon.getPokemonById(data[i].pokemon_id).Name + ' appeared!'
             });
         }
     }
