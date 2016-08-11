@@ -7,5 +7,12 @@ var userInfo = {
 	userFollow: true,
 	gMapsAPIKey: "YOUR_API_KEY_HERE",
 	botPath: true,
-	usePokemonGoMapStyle: true
+	actionsEnabled: false,
+    usePokemonGoMapStyle: true
+};
+//milliseconds
+var dataUpdates = {
+    updateTrainer: 1000,
+    addCatchable: 1000,
+    addInventory: 5000
 };

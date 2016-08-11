@@ -1,12 +1,15 @@
 'use strict';
 
+var socket_io;
+var pokemonActions;
+
 $(document).ready(function() {
   mapView.init();
-  var socket = io.connect('http://' + document.domain + ':' + location.port + '/event');
-    socket.on('connect', function() {
+  socket_io = io.connect('http://' + document.domain + ':' + location.port + '/event');
+    socket_io.on('connect', function() {
       console.log('connected!');
     });
-    socket.on('logging', function(msg) {
+    socket_io.on('logging', function(msg) {
       for(var i = 0; i < msg.length; i++) {
         mapView.log({
           message: msg[i].output,
@@ -14,10 +17,58 @@ $(document).ready(function() {
         });
       }
     });
+
+    pokemonActions = function(socket_io){
+        var actions = {
+            releasePokemon: {
+                button: function(pokemon, user_id){
+                    return '<a href="#!" onClick="pokemonActions.releasePokemon.action(\''+pokemon.unique_id+'\')">Release</a>';
+                },
+                action: function(id){
+                    if(confirm("Are you sure you want to release this pokemon? THIS CANNOT BE UNDONE!")){
+                        socket_io.emit('user_action', {'event':'release_pokemon', data: {'pokemon_id': id}});
+                        mapView.sortAndShowBagPokemon(false, false);
+                    }
+                }
+            },
+
+            evolvePokemon: {
+                button: function(pokemon, user_id){
+                    var pkmnData = mapView.pokemonArray[pokemon.id - 1],
+                        candy = mapView.getCandy(pokemon.id, user_id),
+                        canEvolve = false;
+                    if("undefined" != typeof pkmnData['Next evolution(s)'] && "undefined" != typeof pkmnData['Next Evolution Requirements']){
+                        canEvolve = (candy >= pkmnData['Next Evolution Requirements']['Amount'])
+                    }
+                    return (canEvolve ? '<a href="#!" onClick="pokemonActions.evolvePokemon.action(\''+pokemon.unique_id+'\')">Evolve</a>' : false);
+                },
+                action: function(id){
+                    if(confirm("Are you sure you want to evolve this pokemon? THIS CANNOT BE UNDONE!")){
+                        socket_io.emit('user_action', {'event':'evolve_pokemon', data: {'pokemon_id': id}});
+                        mapView.sortAndShowBagPokemon(false, false);
+                    }
+                }
+            }
+        }
+
+        var enabledActions = {};
+        for(var i in actions){
+            if(mapView.settings.actionsEnabled === true){
+                enabledActions[i] = actions[i];
+            } else if(Array.isArray(mapView.settings.actionsEnabled)){
+                if (mapView.settings.actionsEnabled.indexOf(i) !== -1){
+                    enabledActions[i] = actions[i];
+                }
+            }
+        }
+
+        return enabledActions;
+    }(socket_io)
 });
 
 var mapView = {
   map: [],
+  lastClickLocation: null,
   user_index: 0,
   emptyDex: [],
   forts: [],
@@ -75,6 +126,7 @@ var mapView = {
   levelXpArray: {},
   stats: {},
   user_data: {},
+  user_xps: {},
   pathcoords: {},
   itemsArray: {
     '0': 'Unknown',
@@ -109,9 +161,18 @@ var mapView = {
     '1002': 'Item Storage Upgrade'
   },
   settings: {},
+  mapStyles: {
+    pokemonGo: [
+      { "featureType": "road", "elementType": "geometry.fill", "stylers": [ { "color": "#4f9f92" }, { "visibility": "on" } ] },
+      { "featureType": "water", "elementType": "geometry.stroke", "stylers": [ { "color": "#feff95" }, { "visibility": "on" }, { "weight": 1.2 } ] },
+      { "featureType": "landscape", "elementType": "geometry", "stylers": [ { "color": "#adff9d" }, { "visibility": "on" } ] },
+      { "featureType": "water", "stylers": [ { "visibility": "on" }, { "color": "#147dd9" } ] },
+      { "featureType": "poi", "elementType": "geometry.fill", "stylers": [ { "color": "#d3ffcc" } ] },{ "elementType": "labels", "stylers": [ { "visibility": "off" } ] }
+    ]
+  },
   init: function() {
     var self = this;
-    self.settings = $.extend(true, self.settings, userInfo);
+    self.settings = $.extend(true, self.settings, userInfo, dataUpdates);
     self.bindUi();
 
     $.getScript('https://maps.googleapis.com/maps/api/js?key={0}&libraries=drawing'.format(self.settings.gMapsAPIKey), function() {
@@ -222,14 +283,7 @@ var mapView = {
 
   },
   initMap: function() {
-    var self = this,
-      mapStyle1 = [ 
-        { "featureType": "road", "elementType": "geometry.fill", "stylers": [ { "color": "#4f9f92" }, { "visibility": "on" } ] },
-        { "featureType": "water", "elementType": "geometry.stroke", "stylers": [ { "color": "#feff95" }, { "visibility": "on" }, { "weight": 1.2 } ] },
-        { "featureType": "landscape", "elementType": "geometry", "stylers": [ { "color": "#adff9d" }, { "visibility": "on" } ] },
-        { "featureType": "water", "stylers": [ { "visibility": "on" }, { "color": "#147dd9" } ] },
-        { "featureType": "poi", "elementType": "geometry.fill", "stylers": [ { "color": "#d3ffcc" } ] },{ "elementType": "labels", "stylers": [ { "visibility": "off" } ] } 
-      ];
+    var self = this;
     self.map = new google.maps.Map(document.getElementById('map'), {
       center: {
         lat: 50.0830986,
@@ -237,19 +291,44 @@ var mapView = {
       },
       zoom: 8,
       mapTypeId: 'roadmap',
-      styles: ((self.settings.usePokemonGoMapStyle || self.settings.usePokemonGoMapStyle == undefined) ? mapStyle1 : []) // disable Pokemon Go map style only when explicitly instructed to
+      styles: ((self.settings.usePokemonGoMapStyle || self.settings.usePokemonGoMapStyle === undefined) ? self.mapStyles.pokemonGo : []) // disable Pokemon Go map style only when explicitly instructed to
     });
     self.placeTrainer();
     self.addCatchable();
-    setInterval(self.updateTrainer, 1000);
-    setInterval(self.addCatchable, 1000);
-    setInterval(self.addInventory, 5000);
+    self.buildContextMenu();
+    setInterval(self.updateTrainer, self.settings.updateTrainer);
+    setInterval(self.addCatchable, self.settings.addCatchable);
+    setInterval(self.addInventory, self.settings.addInventory);
   },
   addCatchable: function() {
     var self = mapView;
     for (var i = 0; i < self.settings.users.length; i++) {
       self.loadJSON('catchable-' + self.settings.users[i] + '.json', self.catchSuccess, self.errorFunc, i);
     }
+  },
+  buildContextMenu: function () {
+    var self = this;
+    google.maps.event.addListener(self.map, 'rightclick', function(event) {
+      self.lastClickLocation = event.latLng;
+      $('#map').contextMenu({ x: event.pixel.x, y: event.pixel.y });
+    });
+    google.maps.event.addListener(self.map, 'click', function(event) {
+      $('#map').contextMenu('hide');
+    });
+    $.contextMenu({
+      selector: '#map',
+      items: {
+        copyLoc: {
+          name: "Copy location",
+          icon: 'copy',
+          callback: function() {
+            if (!self.lastClickLocation) return;
+            var locString = self.lastClickLocation.lat() + ', ' + self.lastClickLocation.lng();
+            clipboard.copy(locString);
+          }
+        }
+      }
+    });
   },
   addInventory: function() {
     var self = mapView;
@@ -267,6 +346,17 @@ var mapView = {
         $('#subtitle').html('Trainer Info');
         $('#sortButtons').html('');
 
+        var xps = '';
+        if ((user_id in self.user_xps) && self.user_xps[user_id].length) {
+            var xp_first = self.user_xps[user_id][0];
+            var xp_last = self.user_xps[user_id][self.user_xps[user_id].length-1];
+            var d_xp = xp_last.xp - xp_first.xp;
+            var d_t = xp_last.t - xp_first.t;
+            if (d_t > 0) {
+                xps = '<br>XP/s: '+(Math.round(100*d_xp/d_t)/100)+ ' (earned '+d_xp+' XPs in last '+Math.round(d_t)+' s) ';
+            }
+        }
+
         out += '<div class="row"><div class="col s12"><h5>' +
           self.settings.users[user_id] +
           '</h5><br>Level: ' +
@@ -276,6 +366,7 @@ var mapView = {
           self.levelXpArray[current_user_stats.level - 1].exp_to_next_level) * 100 +
           '%"></div></div>Total Exp: ' +
           current_user_stats.experience +
+          xps +
           '<br>Exp to Lvl ' +
           (parseInt(current_user_stats.level, 10) + 1) +
           ': ' +
@@ -515,6 +606,17 @@ var mapView = {
     userData.stats = stats;
     userData.eggs = self.filter(data, 'egg_incubators');
     self.user_data[self.settings.users[user_index]] = userData;
+
+    if (!(user_index in self.user_xps)) {
+        self.user_xps[user_index] = [];
+    }
+
+    var t = (new Date()).getTime()/1000.0;
+    var xp = userData.stats[0].inventory_item_data.player_stats.experience;
+    self.user_xps[user_index].push({'t': t, 'xp': xp});
+    while (self.user_xps[user_index].length && t-self.user_xps[user_index][0].t > 600) {
+        self.user_xps[user_index].shift();
+    }
   },
   pad_with_zeroes: function(number, length) {
     var my_string = '' + number;
@@ -535,8 +637,8 @@ var mapView = {
       eggs = 0,
       sortedPokemon = [],
       out = '',
-      user = self.user_data[self.settings.users[user_id]],
-      user_id = user_id || 0;
+      user_id = user_id || 0,
+      user = self.user_data[self.settings.users[user_id]];
 
     if (!user.bagPokemon.length) return;
 
@@ -548,6 +650,7 @@ var mapView = {
       }
       var pokemonData = user.bagPokemon[i].inventory_item_data.pokemon_data,
         pkmID = pokemonData.pokemon_id,
+        pkmUID = pokemonData.id,
         pkmnName = self.pokemonArray[pkmID - 1].Name,
         pkmCP = pokemonData.cp,
         pkmIVA = pokemonData.individual_attack || 0,
@@ -561,6 +664,7 @@ var mapView = {
       sortedPokemon.push({
         "name": pkmnName,
         "id": pkmID,
+        "unique_id": pkmUID,
         "cp": pkmCP,
         "iv": pkmIV,
         "attack": pkmIVA,
@@ -629,6 +733,7 @@ var mapView = {
     }
     for (var i = 0; i < sortedPokemon.length; i++) {
       var pkmnNum = sortedPokemon[i].id,
+        pkmnUnique = sortedPokemon[i].unique_id,
         pkmnImage = self.pad_with_zeroes(pkmnNum, 3) + '.png',
         pkmnName = self.pokemonArray[pkmnNum - 1].Name,
         pkmnCP = sortedPokemon[i].cp,
@@ -648,8 +753,36 @@ var mapView = {
         '<br><b>CP:</b>' + pkmnCP +
         '<br><b>IV:</b> ' + (pkmnIV >= 0.8 ? '<span style="color: #039be5">' + pkmnIV + '</span>' : pkmnIV) +
         '<br><b>A/D/S:</b> ' + pkmnIVA + '/' + pkmnIVD + '/' + pkmnIVS +
-        '<br><b>Candy: </b>' + candyNum +
-        '</div>';
+        '<br><b>Candy: </b>' + candyNum
+        ;
+
+      if(Object.keys(pokemonActions).length){
+          var actionsOut = ''
+          for(var pa in pokemonActions){
+            var content = pokemonActions[pa].button(sortedPokemon[i], user_id);
+            if(content){
+                actionsOut += '<li>'+pokemonActions[pa].button(sortedPokemon[i], user_id)+'</li>';
+            }
+          }
+
+          if(actionsOut){
+              out +=
+                '<div>' +
+                '  <a class="dropdown-button btn"  href="#" data-activates="poke-actions-'+pkmnUnique+'">' +
+                '    Actions' +
+                '  </a>' +
+                '  <ul id="poke-actions-'+pkmnUnique+'" class="dropdown-content">' +
+                actionsOut +
+                '  </ul>' +
+                '</div><br>';
+          } else {
+              out += '<div>' +
+                '  <a class="dropdown-button btn disabled" href="#">Actions</a>' +
+                '</div><br>';
+          }
+      }
+
+      out += '</div>';
     }
     // Add number of eggs
     out += '<div class="col s12 m4 l3 center" style="float: left;"><img src="image/items/Egg.png" class="png_img"><br><b>You have ' + eggs + ' egg' + (eggs !== 1 ? "s" : "") + '</div>';
@@ -678,6 +811,7 @@ var mapView = {
       return (nth % 4 === 0) ? '</div></div><div class="row"><div' : match;
     });
     $('#subcontent').html(out);
+    $('.dropdown-button').dropdown();
   },
   sortAndShowPokedex: function(sortOn, user_id) {
     var self = this,
@@ -810,6 +944,14 @@ var mapView = {
                 infowindow.open(map, marker);
               };
             })(self.forts[fort.id], contentString, self.info_windows[fort.id]));
+          } else {
+              if (fort.type == 1) {
+                  if ('lure_info' in fort) {
+                      self.forts[fort.id].setIcon('image/forts/img_pokestop_lure.png');
+                  } else {
+                      self.forts[fort.id].setIcon('image/forts/img_pokestop.png');
+                  }
+              }
           }
         }
       }
@@ -890,8 +1032,12 @@ var mapView = {
     xhr.onreadystatechange = function() {
       if (xhr.readyState === XMLHttpRequest.DONE) {
         if (xhr.status === 200) {
-          if (success)
-            success(JSON.parse(xhr.responseText.replace(/\bNaN\b/g, 'null')), successData);
+          if (success) {
+            try {
+              success(JSON.parse(xhr.responseText.replace(/\bNaN\b/g, 'null')), successData);
+            } catch (err) {
+            }
+          }
         } else {
           if (error)
             error(xhr);
