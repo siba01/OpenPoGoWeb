@@ -86,6 +86,7 @@ var main = {
     prioritize: undefined,
     playerInfo: {},
     user_data: {},
+    user_xps: {},
     settings: {},
     paths: undefined,
     init: function() {
@@ -193,6 +194,17 @@ var main = {
             loadJSON('inventory-' + user + '.json', user).then(function(data) {
                 // data[0] contains the necessary data, data[1] contains the username
                 self.user_data[data[1]].updateInventory(data[0]);
+
+                if (!(data[1] in self.user_xps)) {
+                    self.user_xps[data[1]] = [];
+                }
+
+                var t = (new Date()).getTime()/1000.0;
+                var xp = self.user_data[data[1]].getExperience();
+                self.user_xps[data[1]].push({'t': t, 'xp': xp});
+                while (self.user_xps[data[1]].length && t-self.user_xps[data[1]][0].t > 600) {
+                    self.user_xps[data[1]].shift();
+                }
             });
         }
     },
@@ -206,6 +218,15 @@ var main = {
                     current_user_stats = self.user_data[user_id].stats;
                 $('#subtitle').html('Trainer Info');
                 $('#sortButtons').html('');
+
+                var xps = '';
+                if ((user_id in self.user_xps) && self.user_xps[user_id].length) {
+                    var xp_first = self.user_xps[user_id][0],
+                        xp_last = self.user_xps[user_id][self.user_xps[user_id].length-1],
+                        d_xp = xp_last.xp - xp_first.xp,
+                        d_t = xp_last.t - xp_first.t;
+                    xps = (Math.round(100 * d_xp / d_t) / 100);
+                }
 
                 out += '<div class="row"><div class="col s12"><h5>' +
                     (self.settings.users[user_id].displayName || user_id) +
@@ -227,6 +248,8 @@ var main = {
                     (player.getExperience() - player.getTotalPreviousExps()) +
                     ' / ' +
                     self.requiredExpToLevelUp[player.getLevel()] +
+                    '<br>XP/s: ' +
+                    xps + ' (earned ' + d_xp + ' XPs in the last ' + Math.round(d_t) + 's)' +
                     '<br>Remaining Experience: ' +
                     (self.requiredExpToLevelUp[player.getLevel()] - (player.getExperience() - player.getTotalPreviousExps())) +
                     '<br>Pokemon Encountered: ' +
