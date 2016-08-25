@@ -1,4 +1,6 @@
 # OpenPoGoBotWeb
+**THIS FORK IS DISCONTINUED!**
+
 Web View for ~~OpenPoGoBot~~ and PokemonGo-Bot (read note below)
 
 **Note**: This is a fork of [OpenPoGo/OpenPoGoWeb](https://github.com/OpenPoGo/OpenPoGoWeb/) (wchill/refactor branch). This repo contains my personal modifications/optimizations. This repo was optimized to be used together with [PokemonGoF/PokemonGo-Bot](https://github.com/PokemonGoF/PokemonGo-Bot/). So it's very unlikely to work well with [OpenPoGo/OpenPoGoBot](https://github.com/OpenPoGo/OpenPoGoBot).
